@@ -55,6 +55,11 @@ struct Texture {
 
 	}
 
+	Texture(unsigned int id, string type) {
+		this->id = id;
+		this->type = type;
+	}
+
 	Texture(unsigned int id, string type, string path) {
 		this->id = id;
 		this->type = type;
@@ -74,6 +79,8 @@ public:
 	vector<Vertex> vertices;
 	vector<unsigned int> indices;
 	vector<Texture> textures;
+	vector<unsigned char> colourPlane;
+	int colourPlaneHeight = 0, colourPlaneWidth = 0;
 	unsigned int VAO;
 	bool empty = false;
 
@@ -85,6 +92,16 @@ public:
 		//std::cout << "Made without mesh stuffs" << endl;
 	}
 
+	Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<unsigned char> colourPlane /*  Width * Height * 4 (for RGBA)  */, int CPH, int CPW) {
+		this->vertices = vertices;
+		this->indices = indices;
+		this->colourPlane = colourPlane;
+		colourPlaneHeight = CPH;
+		colourPlaneWidth = CPW;
+
+		setupMesh();
+		OverrideTextures();
+	}
 	Mesh(vector<Vertex> vertices, vector<unsigned int> indices) {
 		this->vertices = vertices;
 		this->indices = indices;
@@ -107,9 +124,34 @@ public:
 		SetupTextures();
 	}
 
-	~Mesh() {
-		//delete this;
-		//cout << "Game ended" << endl;
+	void CalculateNormals() {
+		int triangleCount = indices.size() / 3;
+		for (int i = 0; i < triangleCount; i++) {
+			int triangleIndex = i * 3;
+			int vertexIndexA = indices[triangleIndex];
+			int vertexIndexB = indices[triangleIndex+1];
+			int vertexIndexC = indices[triangleIndex+2];
+
+			glm::vec3 triangleNormal = SurfaceNormalsFromIndices(vertexIndexA, vertexIndexB, vertexIndexC);
+			vertices[vertexIndexA].Normal = triangleNormal;
+			vertices[vertexIndexB].Normal = triangleNormal;
+			vertices[vertexIndexC].Normal = triangleNormal;
+		}
+		for (int i = 0; i < vertices.size(); i++) {
+			normalize(vertices[i].Normal);
+		}
+	}
+
+	glm::vec3 SurfaceNormalsFromIndices(int indexA, int indexB, int indexC) {
+		glm::vec3 pointA = vertices[indexA].Position;
+		glm::vec3 pointB = vertices[indexB].Position;
+		glm::vec3 pointC = vertices[indexC].Position;
+
+		glm::vec3 sideAB = pointB - pointA;
+		glm::vec3 sideAC = pointC - pointA;
+
+		return glm::normalize(glm::cross(sideAB, sideAC));
+
 	}
 
 	void SetupTextures() {
@@ -148,6 +190,21 @@ public:
 			//cout << "Mesh Setup w/Texture" << endl;
 		}
 	}
+
+	void OverrideTextures() {
+		textures.push_back(Texture(0, "texture_diffuse"));
+		glGenTextures(1, &textures[0].id);
+		glBindTexture(GL_TEXTURE_2D, textures[0].id);
+		// set the texture wrapping parameters
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		// set texture filtering parameters
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, colourPlaneWidth, colourPlaneHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, colourPlane.data());
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+
 	void Draw(Shader& shader) {	
 		unsigned int diffuseNr = 1;
 		unsigned int specularNr = 1;
@@ -184,6 +241,8 @@ public:
 private:
 	unsigned int VBO, EBO;
 	void setupMesh() {
+		CalculateNormals();
+
 		glGenVertexArrays(1, &VAO);
 		glGenBuffers(1, &VBO);
 		glGenBuffers(1, &EBO);
@@ -221,7 +280,6 @@ private:
 		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
 
 		glBindVertexArray(0);
-
 		//cout << "Mesh Setup" << endl;
 	}
 };

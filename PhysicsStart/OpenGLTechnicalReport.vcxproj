@@ -163,8 +163,12 @@
     <ClInclude Include="timer.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader.fs" />
-    <None Include="shader.vs" />
+    <None Include="shader.fs">
+      <FileType>CppCode</FileType>
+    </None>
+    <None Include="shader.vs">
+      <FileType>CppCode</FileType>
+    </None>
     <None Include="simpleShader.fs" />
     <None Include="simpleShader.vs" />
   </ItemGroup>

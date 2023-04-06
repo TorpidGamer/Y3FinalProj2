@@ -115,13 +115,14 @@ int main() {
     GameObject cameraGO(glm::vec3(0.5f, 0.5f, 0.5f), "camera");
 
     camera.playerChar = &player;
+    camera.playerChar->gravity = false;
     currentScene = new Scene("Current");
 
     glm::vec3 pointLightPos[4] = {
-        glm::vec3(0.7f,  0.2f,  2.0f),
-        glm::vec3(2.3f, -3.3f, -4.0f),
-        glm::vec3(-4.0f,  2.0f, -12.0f),
-        glm::vec3(0.0f,  0.0f, -3.0f)
+        glm::vec3(1.0f,  -6.2f,  1.0f),
+        glm::vec3(2.0f, -6.3f, 2.0f),
+        glm::vec3(-2.0f,  -6.0f, -2.0f),
+        glm::vec3(-1.0f,  -6.0f, -1.0f)
     };
 
     ourShader.use();
@@ -134,7 +135,7 @@ int main() {
     for (unsigned int i = 0; i < 4; i++) {
         ourShader.setVec3(("pointLights[" + to_string(i) + "].position"), pointLightPos[i]);
         ourShader.setVec3(("pointLights[" + to_string(i) + "].ambient"), .05f, .05f, .05f);
-        ourShader.setVec3(("pointLights[" + to_string(i) + "].diffuse"), .8f, .8f, .8f);
+        ourShader.setVec3(("pointLights[" + to_string(i) + "].diffuse"), .4f, .4f, .8f);
         ourShader.setVec3(("pointLights[" + to_string(i) + "].specular"), 1.f, 1.f, 1.f);
 
         ourShader.setFloat(("pointLights[" + to_string(i) + "].constant"), 1.f);
@@ -156,16 +157,17 @@ int main() {
     bool active = false;
     //Set up scenes
     scenes["Test"] = new TestScene("Test");
-    scenes["Level1"] = new LevelOne("Level1");
+    scenes["Procedural"] = new ProceduralScene("Procedural");
 
     if (!scenes.empty()) {
-        currentScene = LoadScene(currentScene, "Level1", &camera);
+        currentScene = LoadScene(currentScene, "Procedural", &camera);
     }
     else cout << "No Scene To Load" << endl;
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
+        camera.playerChar->gravity = false;
         // TIME LOGIC
         currentFrame = (float)glfwGetTime();
         limitedDT += (currentFrame - lastTime) / limitFPS;

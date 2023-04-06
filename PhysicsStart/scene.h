@@ -1,12 +1,14 @@
 #pragma once
 #include <iostream>
 #include <cstdlib>
+#include <glm/glm.hpp>
 #include "primitives.h"
 #include "gameobjectchildren.h"
 #include "camera.h"
 
 int numOfScenes = 0;
 class Scene;
+class MeshData;
 map <string, Scene*> scenes;
 bool sceneLoaded = false;
 class Scene {
@@ -119,12 +121,99 @@ public:
         return testScene;
     }
 };
+//Code heavily based on Sebastion Lague's Procedural Terrain Generation series https://www.youtube.com/watch?v=wbpMiKiSKm8&list=PLFt_AvWsXl0eBW2EiBtl_sxmDtSgZBxB3
+class MeshData {
+public:
+    //20 in this case is the mapwidth and mapheight, have to update this manually for now, figure out better way after testing
+    vector<Vertex> vertices;
+    vector<unsigned int> triangles;
+    vector<unsigned char> textureColourPlane;
+    int CPH = 0, CPW = 0;
+
+    int triangleIndex = 0;
+
+    MeshData(int mapWidth, int mapHeight) {
+        vertices = vector<Vertex>(mapWidth * mapHeight);
+        triangles = vector<unsigned int>((mapWidth - 1) * (mapHeight - 1) * 6);
+        textureColourPlane = vector<unsigned char>(mapWidth*mapHeight*4);
+        CPH = mapHeight;
+        CPW = mapWidth;
+        for (int iy = 0; iy < mapHeight; ++iy)
+        {
+            for (int ix = 0; ix < mapWidth; ++ix)
+            {
+                int   index = (iy * mapWidth + ix) * 4;
+                float gradX = (float)ix / mapWidth;
+                float gradY = (float)iy / mapHeight;
+                textureColourPlane[index + 0] = (unsigned char)(255.0 * (1.0 - gradX));
+                textureColourPlane[index + 1] = (unsigned char)(255.0 * (1.0 - gradY));
+                textureColourPlane[index + 2] = (unsigned char)(255.0 * gradX * gradY);
+                textureColourPlane[index + 3] = 255;
+            }
+        }
+    }
+
+    void AddTriangle(int a, int b, int c) {
+        triangles[triangleIndex] = a;
+        triangles[triangleIndex + 1] = b;
+        triangles[triangleIndex + 2] = c;
+        triangleIndex += 3;
+    }
+
+    Mesh GenerateMesh() {
+        return Mesh(vertices, triangles, textureColourPlane, CPH, CPW);
+    }
+};
 
 class ProceduralScene : public Scene {
 public:
-    ProceduralScene(string name) : Scene(name) { 
-        
+    static const int mapWidth = 200;
+    static const int mapHeight = 200;
+    float heightMap[mapWidth][mapHeight];
+    int triangles[(mapWidth - 1)*(mapHeight - 1) * 6];
+    int vertexIndex = 0;
+    float moveLeftX = (mapWidth - 1) / -2.f;
+    float moveLeftZ = (mapHeight - 1) / 2.f;
+    MeshData meshData = MeshData(mapWidth, mapHeight);
+    ProceduralScene(string name) : Scene(name) {
+        for (int x = 0; x < mapWidth; x++) {
+            for (int y = 0; y < mapHeight; y++){
+                heightMap[x][y] = /*RandomNoise*/ static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                meshData.vertices[vertexIndex].Position = glm::vec3(moveLeftX + x, heightMap[x][y], moveLeftZ - y);
+                meshData.vertices[vertexIndex].TexCoords = glm::vec2(x / (float)mapWidth, y / (float)mapHeight);
 
+                int meshDataIndex = (y * mapWidth + x) * 4;
+                meshData.textureColourPlane[meshDataIndex] = (unsigned char)(0 * (1 - heightMap[x][y]) + (255 * heightMap[x][y]));
+                meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)(0 * (1 - heightMap[x][y]) + (255 * heightMap[x][y]));
+                meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)(0 * (1 - heightMap[x][y]) + (255 * heightMap[x][y]));
+                meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
+
+                if (x < mapWidth - 1 && y < mapHeight - 1) {
+                    meshData.AddTriangle(vertexIndex, vertexIndex + mapWidth + 1, vertexIndex + mapWidth);
+                    meshData.AddTriangle(vertexIndex + mapWidth + 1, vertexIndex, vertexIndex + 1);
+                }
+                vertexIndex++;
+            }
+        }
     }
+    virtual Scene* InitScene() override {
+        Scene* scene = scenes.at("Procedural");
+        Mesh* generatedMesh = new Mesh(meshData.GenerateMesh());
+        meshes["generatedMesh"] = generatedMesh;
+        GameObject* floor = new GameObject(meshes["generatedMesh"], glm::vec3(0.f, -5.f, 0.f), glm::vec3(0.f), glm::vec3(1.f, 1.f, 1.f), glm::vec3(0), "floor");
+        floor->staticObj = true;
+
+        scene->sceneGOs["floor"] = floor;
+
+        return scene;
+    }
+
+};
+
+class PerlinNoiseGenerator {
+
+};
+
+class MeshGenerator {
 
 };

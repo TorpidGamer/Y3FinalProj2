@@ -47,7 +47,7 @@ void GameObject::Initialise(glm::vec3 position = glm::vec3(0.f),
 
 void GameObject::Render(Shader &complexShader) {	
 	//Non static objects
-	if (!staticObj) {
+	/*if (!staticObj) {
 		if (!noMesh) {
 			if (model == nullptr) {
 				complexShader.setMat4("model", CalculateMatrix());
@@ -58,9 +58,19 @@ void GameObject::Render(Shader &complexShader) {
 				model->Draw(complexShader);
 			}
 		}
+	}*/
+	if (!noMesh) {
+		if (model == nullptr) {
+			complexShader.setMat4("model", CalculateMatrix());
+			mesh->Draw(complexShader);
+		}
+		else {
+			complexShader.setMat4("model", CalculateMatrix());
+			model->Draw(complexShader);
+		}
 	}
 	//Static objects shouldnt need recalculated matrices per frame
-	else {
+	/*else {
 		if (staticModel == glm::mat4(0.f)) {
 			staticModel = CalculateMatrix();
 		}
@@ -74,7 +84,7 @@ void GameObject::Render(Shader &complexShader) {
 				model->Draw(complexShader);
 			}
 		}
-	}
+	}*/
 	//Bounding Box Section
 	glm::mat4 bbModelMat;
 	glm::vec3 bbPos;
