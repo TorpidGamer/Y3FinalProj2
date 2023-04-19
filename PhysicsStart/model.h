@@ -25,6 +25,9 @@ public:
 	Model(string const &path, bool gamma = false) : gammaCorrection(gamma) {
 		loadModel(path);
 	}
+	Model(Mesh mesh) {
+		meshes.push_back(mesh);
+	}
 	void Draw(Shader& shader) {
 		for (unsigned int i = 0; i < meshes.size(); i++) {
 			meshes[i].Draw(shader);

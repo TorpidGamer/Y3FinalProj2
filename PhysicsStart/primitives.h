@@ -1,5 +1,5 @@
 #pragma once
-#include "mesh.h"
+#include "model.h"
 
 
 
@@ -92,8 +92,8 @@ public:
 		}
 	}
 
-	Mesh CreateMesh(Shape meshToMake) {
-		DefineShapes(meshToMake);
-		return Mesh(primitiveVertices, indices, textures, true);
+	Model CreateModel(Shape modelToMake) {
+		DefineShapes(modelToMake);
+		return Model(Mesh(primitiveVertices, indices, textures, true));
 	}
 };

@@ -3,6 +3,7 @@
 #define GAMEOBJ_H
 
 #include "model.h"
+#include "primitives.h"
 
 class GameObject {
 public:
@@ -15,7 +16,10 @@ public:
 	string name;
 	GameObject* parent;
 	vector<GameObject*> children;
+	Model* model;
 
+
+	int meshSize;
 	bool transparent = false;
 	bool resolveCollisions = false;
 	bool staticObj = false;
@@ -30,16 +34,15 @@ public:
 
 	glm::mat4 staticModel = glm::mat4(0.f);
 
-	float bbWidth, bbHeight, bbDepth;
+	float bbWidth = 0.25f, bbHeight = 0.25f, bbDepth = 0.25f;
 	glm::vec3 RTF, LBB;
 	glm::vec3 RightTopFront, LeftBottomBack;
-	vector<glm::vec3> bounds; //0 1 = inner 2 3, 4 5 = left right, 6 7, 8 9 = top bottom, 10 11, 12 13 = front back
+	vector<glm::vec3> bounds; //0 1
 	vector<string> collidingWith;
 	Mesh boundingBox;
 	
-	GameObject(Mesh *mesh, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, glm::vec3 bbDimensions, string name);
 	GameObject(Model *model, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, glm::vec3 bbDimensions, string name);
-	GameObject(glm::vec3 bbDimensions, string name);
+	GameObject(string name);
 	//~GameObject();
 
 	virtual void Update(float deltaTime);
@@ -52,6 +55,7 @@ public:
 	void Collisions(GameObject* other, float deltaTime);
 	void HandleCollision(int side, GameObject* other);
 	void CalculateBounds();
+	void CountVertices();
 
 	void Translate(glm::vec3 newPos);
 	void Translate(float x, float y, float z);
@@ -63,8 +67,7 @@ public:
 	glm::mat4 CalculateMatrix();
 private:
 	const static int numOf = 0;
-	Mesh *mesh;
-	Model *model;
+
 	bool noMesh;
 };
 #endif

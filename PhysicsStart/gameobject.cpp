@@ -1,27 +1,14 @@
 #include "gameobject.h"
 
-GameObject::GameObject(Mesh *mesh, glm::vec3 position = glm::vec3(0.f),
-	glm::vec3 rotation = glm::vec3(0.f), glm::vec3 scale = glm::vec3(1.f), glm::vec3 bbDimensions = glm::vec3(0.f), string name = "") {
-
-	if (mesh) {
-		this->mesh = mesh;
-	}
-	Initialise(position, rotation, scale, bbDimensions, name);
-	LoopVertices();
-}
-
 GameObject::GameObject(Model* model, glm::vec3 position = glm::vec3(0.f),
 	glm::vec3 rotation = glm::vec3(0.f), glm::vec3 scale = glm::vec3(1.f), glm::vec3 bbDimensions = glm::vec3(0.f), string name = "") {
 	this->model = model;
 	Initialise(position, rotation, scale, bbDimensions, name);
 	LoopVertices();
 }
-GameObject::GameObject(glm::vec3 bbDimensions = glm::vec3(0.f), string name = "") {
-	noMesh = true;
-	this->name = name;
-	bbWidth = bbDimensions.x;
-	bbHeight = bbDimensions.y;
-	bbDepth = bbDimensions.z;
+GameObject::GameObject(string name = "") {
+	Primitives newCube;
+	model = new Model(newCube.CreateModel(Primitives::Cube));
 	LoopVertices();
 }
 
@@ -46,29 +33,11 @@ void GameObject::Initialise(glm::vec3 position = glm::vec3(0.f),
 }
 
 void GameObject::Render(Shader &complexShader) {	
-	//Non static objects
-	/*if (!staticObj) {
-		if (!noMesh) {
-			if (model == nullptr) {
-				complexShader.setMat4("model", CalculateMatrix());
-				mesh->Draw(complexShader);
-			}
-			else {
-				complexShader.setMat4("model", CalculateMatrix());
-				model->Draw(complexShader);
-			}
-		}
-	}*/
-	if (!noMesh) {
-		if (model == nullptr) {
-			complexShader.setMat4("model", CalculateMatrix());
-			mesh->Draw(complexShader);
-		}
-		else {
-			complexShader.setMat4("model", CalculateMatrix());
-			model->Draw(complexShader);
-		}
+	if (!(model == nullptr)) {
+		complexShader.setMat4("model", CalculateMatrix());
+		model->Draw(complexShader);
 	}
+	//else cout << "No Model" << endl;
 	//Static objects shouldnt need recalculated matrices per frame
 	/*else {
 		if (staticModel == glm::mat4(0.f)) {
@@ -110,23 +79,35 @@ void GameObject::Render(Shader &complexShader) {
 			complexShader.setMat4("model", bbModelMat);
 			boundingBox.Draw(complexShader);
 		}
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 }
 
 void GameObject::Update(float deltaTime = 0.f) {
 	prevPos = position;
 	if (gravity && !staticObj) {
-		velocity.y += gravityForce * deltaTime;
+		//velocity.y += gravityForce * deltaTime;
 	}
+	if (velocity.x > 3.f) velocity.x = 3.f;
+	if (velocity.y > 0.f) velocity.y = 0.f;
+	if (velocity.z > 3.f) velocity.z = 3.f;
 	position += velocity;
-	velocity = glm::vec3(0, velocity.y, 0);
+	velocity = glm::vec3(0, 0, 0);
 	//position.y -= .8f * deltaTime;
 	//cout << position.x << endl;
 }
 
+void GameObject::CountVertices() {
+	for (unsigned int j = 0; j < model->meshes.size(); j++) {
+		for (unsigned int i = 0; i < model->meshes[j].vertices.size(); i++) {
+			meshSize++;
+		}
+	}
+}
+
 //For loop to find the minimum and maximum of the vertices, use imbetween for sides
 void GameObject::LoopVertices() {
+	meshSize = model == nullptr ? 8 : model->meshes[0].vertices.size();
 	float top, bottom, left, right, front, back;
 	right = (bbWidth / 2);
 	left = -(bbWidth / 2);
@@ -134,58 +115,30 @@ void GameObject::LoopVertices() {
 	bottom = -(bbHeight / 2);
 	front = (bbDepth / 2);
 	back = -(bbDepth / 2);
-	if (!noMesh) {
-		if (!model) {
-			for (unsigned int i = 0; i < mesh->vertices.size(); i++) {
-				glm::vec3 posToCheck = mesh->vertices[i].Position;
-				if (posToCheck.x > right) {
-					right = posToCheck.x;
-				}
-				if (posToCheck.x < left) {
-					left = posToCheck.x;
-				}
-				if (posToCheck.y > top) {
-					top = posToCheck.y;
-				}
-				if (posToCheck.y < bottom) {
-					bottom = posToCheck.y;
-				}
-				if (posToCheck.z > front) {
-					front = posToCheck.z;
-				}
-				if (posToCheck.z < back) {
-					back = posToCheck.z;
-				}
-				//cout << posToCheck.x << ", " << posToCheck.y << ", " << posToCheck.z << endl;
+	/*for (unsigned int j = 0; j < model->meshes.size(); j++) {
+		for (unsigned int i = 0; i < model->meshes[j].vertices.size(); i++) {
+			glm::vec3 posToCheck = model->meshes[j].vertices[i].Position;
+			if (posToCheck.x > right) {
+				right = posToCheck.x;
 			}
-		}
-		else {
-			for (unsigned int j = 0; j < model->meshes.size(); j++) {
-				for (unsigned int i = 0; i < model->meshes[j].vertices.size(); i++) {
-					glm::vec3 posToCheck = model->meshes[j].vertices[i].Position;
-					if (posToCheck.x > right) {
-						right = posToCheck.x;
-					}
-					if (posToCheck.x < left) {
-						left = posToCheck.x;
-					}
-					if (posToCheck.y > top) {
-						top = posToCheck.y;
-					}
-					if (posToCheck.y < bottom) {
-						bottom = posToCheck.y;
-					}
-					if (posToCheck.z > front) {
-						front = posToCheck.z;
-					}
-					if (posToCheck.z < back) {
-						back = posToCheck.z;
-					}
-					//cout << posToCheck.x << ", " << posToCheck.y << ", " << posToCheck.z << endl;
-				}
+			if (posToCheck.x < left) {
+				left = posToCheck.x;
 			}
+			if (posToCheck.y > top) {
+				top = posToCheck.y;
+			}
+			if (posToCheck.y < bottom) {
+				bottom = posToCheck.y;
+			}
+			if (posToCheck.z > front) {
+				front = posToCheck.z;
+			}
+			if (posToCheck.z < back) {
+				back = posToCheck.z;
+			}
+			//cout << posToCheck.x << ", " << posToCheck.y << ", " << posToCheck.z << endl;
 		}
-	}
+	}*/
 	top *= scale.y;
 	bottom *= scale.y;
 	left *= scale.x;
@@ -228,7 +181,7 @@ void GameObject::LoopVertices() {
 
 	boundingBox = Mesh(primitiveVertices, indices);
 }
-void GameObject::CalculateBounds() {
+void GameObject::CalculateBounds() { //Needs redoing, only need one bounding box to check if within collision test range
 	glm::vec3 nextPos = position + velocity;
 	if (!staticObj || bounds.empty()) {
 		RTF = RightTopFront;
@@ -241,7 +194,7 @@ void GameObject::CalculateBounds() {
 			RTF + nextPos,
 			LBB + nextPos,
 
-			RTF + nextPos + glm::vec3(width, 0, 0),//Right
+			/*RTF + nextPos + glm::vec3(width, 0, 0),//Right
 			LBB + nextPos + glm::vec3(width, 0, 0),
 
 			RTF + nextPos - glm::vec3(width, 0, 0),//Left
@@ -257,7 +210,7 @@ void GameObject::CalculateBounds() {
 			LBB + nextPos + glm::vec3(0, 0, depth),
 
 			RTF + nextPos - glm::vec3(0, 0, depth),//Back
-			LBB + nextPos - glm::vec3(0, 0, depth),
+			LBB + nextPos - glm::vec3(0, 0, depth),*/
 		};
 	}
 }
@@ -268,8 +221,9 @@ void GameObject::Collisions(GameObject* other, float deltaTime) {
 	other->CalculateBounds();
 	float collisionSpeed = 5;
 
+	//Use indices of object as index for vertices to calculate edges
+
 	bool x, y, z;
-	bool isBottom = false;
 	for (unsigned int i = 0; i < bounds.size(); i += 2) {
 		if (min(bounds[i].x, other->bounds[i].x) > max(bounds[i + 1].x, other->bounds[i + 1].x)) /*X overlap*/ x = true;
 		else x = false;
@@ -278,19 +232,7 @@ void GameObject::Collisions(GameObject* other, float deltaTime) {
 		if (min(bounds[i].z, other->bounds[i].z) > max(bounds[i + 1].z, other->bounds[i + 1].z)) /*Z overlap*/ z = true;
 		else z = false;
 
-		if (x || y || z) {
-			if (i == 6) {
-				isBottom = true;
-			}
-		}
-
 		if (x && y && z) {
-			if (i == 6) {
-				if (this->name == "player") {
-					//cout << "bottom" << endl;
-				}
-				isBottom = true;
-			}
 			if (i == 0) {
 				if (!isTrigger) {
 					isBottom = true;
@@ -305,7 +247,9 @@ void GameObject::Collisions(GameObject* other, float deltaTime) {
 				}
 				//continue;
 			}
-			HandleCollision(i, other);
+			if (!isTrigger) {
+				HandleCollision(i, other);
+			}
 		}
 		for (unsigned int c = 0; c < collidingWith.size(); c++) {
 			if (other->name == collidingWith[c]) {
@@ -326,73 +270,16 @@ void GameObject::Collisions(GameObject* other, float deltaTime) {
 void GameObject::HandleCollision(int side, GameObject* other) {
 	if (!staticObj) {
 		float collisionSpeed = 6.f;
+		glm::vec3 velocityResolution = glm::vec3(0);
 		if (resolveCollisions && other->resolveCollisions) {
 			//cout << side << endl;
-			position = prevPos;
-			if (!other->staticObj) other->position = other->prevPos;
-			if (side == 6) { //Bottom
-				//cout << "Stopping Y" << endl;
-				//cout << position.y << other->position.y << endl;
-				gravity = false;
-				velocity.y *= 0;
+			if (!noMesh) { // If we have a mesh
+				if (!other->noMesh) { // If the other has a mesh
+					
+				}
 			}
-			/*if (side == 2 || side == 4) { //Left
-				cout << "Stopping X" << endl;
-				velocity.x = -velocity.x;
-				if (!other->staticObj) other->velocity.x = -other->velocity.x;
-			}
-			if (side == 6 || side == 8) { //Top?
-				cout << "Stopping Y" << endl;
-				velocity.y *= 0;
-				if (!other->staticObj) other->velocity.y *= 0;
-			}
-			if (side == 10 || side == 12) { //Back
-				cout << "Stopping Z" << endl;
-				velocity.z *= 0;
-				if (!other->staticObj) other->velocity.z *= 0;
-			}*/
-			
-			/*if (side == 2) { //Left
-				cout << "Pushing Right" << endl;
-				if (velocity.x < 0)	velocity.x = 0;
-				//if (!other->staticObj) other->velocity.x = 0;
-			}
-			if (side == 4) { //Right
-				cout << "Pushing Left" << endl;
-				if (velocity.x > 0)	velocity.x = 0;
-				//if (!other->staticObj) other->velocity.x = 0;
-			}
-			if (side == 6) { //Top?
-				cout << "Pushing Up" << endl;
-				if (velocity.y < 0)	velocity.y = 0;
-				//if (!other->staticObj) other->velocity.y = 0;
-			}
-			if (side == 8) { //Bottom?
-				cout << "Pushing Down" << endl;
-				if (velocity.y > 0)	velocity.y = 0;
-				//if (!other->staticObj) other->velocity.y = 0;
-			}
-			if (side == 10) { //Back
-				cout << "Pushing Front" << endl;
-				if (velocity.z < 0)	velocity.z = 0;
-				//if (!other->staticObj) other->velocity.z = 0;
-			}
-			if (side == 12) { //Front
-				cout << "Pushing Back" << endl;
-				if (velocity.z > 0)	velocity.z = 0;
-				//if (!other->staticObj) other->velocity.z = 0;
-			}*/
-			//if (min(bounds[0].x, other->bounds[0].x) > max(bounds[1].x, other->bounds[1].x)) /*X overlap*/ x = true;
-			//else x = false;
-			//if (min(bounds[0].y, other->bounds[0].y) > max(bounds[1].y, other->bounds[1].y)) /*Y overlap*/ y = true;
-			//else y = false;
-			//if (min(bounds[0].z, other->bounds[0].z) > max(bounds[1].z, other->bounds[1].z)) /*Z overlap*/ z = true;
-			//else z = false;
-
-
-			/*if (!x || !y || !z) { resolveCollisions = false; return; }
-			if (x && y && z) {HandleCollision(side, other, deltaTime);}*/
 		}
+		gravity = false;
 	}
 }
 

@@ -16,5 +16,4 @@ extern Scene* LoadScene(Scene* currentScene, string sceneToLoad, Camera* cam);
 
 
 
-
 #endif // !COMMON_H

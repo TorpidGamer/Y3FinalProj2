@@ -43,6 +43,7 @@ bool rPressed = false;
 float jumpVelocity = 1000;
 float jumpHold = 0;
 Shader* shaderPointer;
+bool fPressed = false;
 
 int startSceneID;
 Scene* currentScene;
@@ -111,8 +112,12 @@ int main() {
     shaderPointer = &ourShader;
     Shader lightShader("simpleShader.vs", "simpleShader.fs");
 
-    GameObject player(glm::vec3(0.5f, 1.f, 0.5f), "player");
-    GameObject cameraGO(glm::vec3(0.5f, 0.5f, 0.5f), "camera");
+    Primitives playerPrim;
+    Model playerMesh = playerPrim.CreateModel(Primitives::Cube);
+
+    GameObject player(&playerMesh, glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "player");
+    GameObject cameraGO("camera");
+    cameraGO.scale = glm::vec3(0.f);
 
     camera.playerChar = &player;
     camera.playerChar->gravity = false;
@@ -125,10 +130,12 @@ int main() {
         glm::vec3(-1.0f,  -6.0f, -1.0f)
     };
 
+    
+
     ourShader.use();
 
     ourShader.setVec3("dirLight.direction", -0.2f, -1.f, -.3f);
-    ourShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+    ourShader.setVec3("dirLight.ambient", 0.7f, 0.7f, 0.7f);
     ourShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
     ourShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
@@ -143,7 +150,7 @@ int main() {
         ourShader.setFloat(("pointLights[" + to_string(i) + "].quadratic"), .032f);
     }
 
-    projection = glm::perspective(glm::radians(90.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(90.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
     ourShader.setMat4("projection", projection);
 
     float angle = 20;
@@ -165,9 +172,9 @@ int main() {
     else cout << "No Scene To Load" << endl;
     // render loop
     // -----------
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     while (!glfwWindowShouldClose(window))
     {
-        camera.playerChar->gravity = false;
         // TIME LOGIC
         currentFrame = (float)glfwGetTime();
         limitedDT += (currentFrame - lastTime) / limitFPS;
@@ -195,7 +202,7 @@ int main() {
 
         ourShader.use();
 
-        ourShader.setFloat("material.shininess", 32.0f);
+        ourShader.setFloat("material.shininess", 64.0f);
         ourShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
         ourShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f); // darken diffuse light a bit
         ourShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
@@ -337,6 +344,7 @@ void ProcessInputs(GLFWwindow* window) {
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
         if (camera.playerChar->gravity == false && !playerJumpTimer.isStarted) {
             //Jump reaches about 0.8 in height
@@ -347,17 +355,27 @@ void ProcessInputs(GLFWwindow* window) {
             jumpHold += 0.06 * deltaTime;
         }
     }
+
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         camera.Zoom = 0;
-        projection = glm::perspective(glm::radians(90.0f - camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(90.0f - camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
         if (shaderPointer != nullptr) shaderPointer->setMat4("projection", projection);
     }
+
     if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
-        cout << glm::to_string(camera.playerChar->position) << endl;
-        for (auto it = currentScene->sceneGOs.begin(); it != currentScene->sceneGOs.end(); it++) {
-            cout << it->second->name << endl;
-        }
+        camera.playerChar->gravity = !camera.playerChar->gravity;
     }
+
+    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+        currentScene->PassDataToScene();
+        fPressed = true;
+    }
+    if (fPressed && glfwGetKey(window, GLFW_KEY_F) == GLFW_RELEASE) {
+        cout << "F Released" << endl;
+        currentScene->PassDataToScene(1);
+        fPressed = false;
+    }
+
     if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
         if (sceneLoaded) {
             currentScene = LoadScene(currentScene, "Test", &camera);
@@ -394,7 +412,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     camera.ProcessMouseScroll((float)(yoffset));
-    projection = glm::perspective(glm::radians(90.0f - camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(90.0f - camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
     if (shaderPointer != nullptr) shaderPointer->setMat4("projection", projection);
 }
 

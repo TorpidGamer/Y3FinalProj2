@@ -157,6 +157,7 @@
     <ClInclude Include="model.h" />
     <ClInclude Include="primitives.h" />
     <ClInclude Include="rigidbody.h" />
+    <ClInclude Include="sat.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="mesh.h" />
