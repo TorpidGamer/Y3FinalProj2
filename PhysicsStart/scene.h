@@ -97,7 +97,7 @@ public:
         GameObject* goal = new GameObject(models["cubeMesh"], glm::vec3(0, 0, 10), glm::vec3(0), glm::vec3(1), glm::vec3(0), "Test");
         GameObject* floor = new GameObject(models["cubeMesh"], glm::vec3(0.f, -10.f, 0.f), glm::vec3(0.f), glm::vec3(30.f, 2.f, 30.f), glm::vec3(0), "floor");
         //GameObject* maxwell = new GameObject(models["maxwell"], glm::vec3(0.f, 0.f, 5.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(.33f), glm::vec3(0), "maxwell");
-        GameObject* carGO = new GameObject(models["car"], glm::vec3(10.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f), glm::vec3(0), "car");
+        //GameObject* carGO = new GameObject(models["car"], glm::vec3(10.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f), glm::vec3(0), "car");
         /*GameObject* window1 = new GameObject(models["quadMesh"], glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "window1");
         GameObject* window2 = new GameObject(models["quadMesh"], glm::vec3(2.f, 0.f, -4.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "window2");
         GameObject* window3 = new GameObject(models["quadMesh"], glm::vec3(1.f, 0.f, -6.f), glm::vec3(0.f, 90.f, 0.f), glm::vec3(1.f), glm::vec3(0), "window3");
@@ -119,7 +119,7 @@ public:
 
         testScene->sceneGOs["goal"] = goal;
         //testScene->sceneGOs["maxwell"] = maxwell;
-        testScene->sceneGOs["car"] = carGO;
+        //testScene->sceneGOs["car"] = carGO;
         testScene->sceneGOs["floor"] = floor;
 
         return testScene;
@@ -210,7 +210,7 @@ public:
                     meshData.vertices[vertexIndex].Position.y = 0;
                     meshData.textureColourPlane[meshDataIndex] = (unsigned char)0;
                     meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)0;
-                    meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)Lerp(heightMap[x][y], 0, 255);
+                    meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)Lerp(heightMap[x][y], 128, 255);
                     meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
                 }
 

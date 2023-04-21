@@ -37,9 +37,10 @@ public:
 	float bbWidth = 0.25f, bbHeight = 0.25f, bbDepth = 0.25f;
 	glm::vec3 RTF, LBB;
 	glm::vec3 RightTopFront, LeftBottomBack;
+	glm::vec3 collisionNormalLine = glm::vec3(0);
 	vector<glm::vec3> bounds; //0 1
 	vector<string> collidingWith;
-	Mesh boundingBox;
+	Mesh boundingBox, collisionLineMesh;
 	
 	GameObject(Model *model, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, glm::vec3 bbDimensions, string name);
 	GameObject(string name);

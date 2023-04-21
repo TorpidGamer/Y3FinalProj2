@@ -25,8 +25,12 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 			pointB = (obj1->model->meshes[0].vertices[(i + 1) % obj1->model->meshes[0].vertices.size()].Position * obj1->scale) + obj1->position;
 			pointA = (obj1->model->meshes[0].vertices[i].Position * obj1->scale) + obj1->position;
 			glm::vec3 edge = pointB - pointA;
-			glm::vec3 axis = glm::normalize(glm::cross(edge, glm::vec3(0, 1, 0)));
-
+			edge.x = edge.y * 0 - edge.z * 1;
+			edge.y = edge.z * 0 - edge.x * 0;
+			edge.z = edge.x * 1 - edge.y * 0;
+			cout << edge.x << ", " << edge.y << ", " << edge.z << endl;
+			glm::vec3 axis = glm::normalize(edge);
+			
 			//X = min, Y == max
 			glm::vec2 project1, project2;
 			project1 = ProjectVertices(obj1, axis);
@@ -38,7 +42,7 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 			}
 
 			float axisDepth = min(project2.y - project1.x, project1.y - project2.x);
-			cout << axis.x << ", " << axis.y << ", " << axis.z << endl;
+			
 			if (axisDepth < collisionDeets.depth) {
 				collisionDeets.depth = axisDepth;
 				collisionDeets.normal = axis;
@@ -51,8 +55,8 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 			pointB = (obj2->model->meshes[0].vertices[(i + 1) % obj2->model->meshes[0].vertices.size()].Position * obj2->scale) + obj2->position;
 			pointA = (obj2->model->meshes[0].vertices[i].Position * obj2->scale) + obj2->position;
 			glm::vec3 edge = pointB - pointA;
-			glm::vec3 axis = glm::normalize(glm::cross(edge, glm::vec3(0, 1, 0)));
-
+			glm::vec3 axis = glm::normalize(edge);
+			//cout << axis.x << ", " << axis.y << ", " << axis.z << endl;
 			glm::vec2 project1, project2;
 			project1 = ProjectVertices(obj1, axis);
 			project2 = ProjectVertices(obj2, axis);
@@ -63,7 +67,7 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 			}
 
 			float axisDepth = min(project2.y - project1.x, project1.y - project2.x);
-			cout << axis.x << ", " << axis.y << ", " << axis.z << endl;
+			
 			if (axisDepth < collisionDeets.depth) {
 				collisionDeets.depth = axisDepth;
 				collisionDeets.normal = axis;
@@ -75,14 +79,9 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 		collisionDeets.normal = glm::normalize(collisionDeets.normal);
 
 		glm::vec3 intendedDir = obj2->position - obj1->position;
-		if (collisionDeets.normal == glm::vec3(NAN)) {
-			cout << "Non normal number, returning" << endl;
-			collisionDeets.normal = glm::vec3(0);
-			return collisionDeets;
-		}
 		if (glm::dot(intendedDir, collisionDeets.normal) < 0) collisionDeets.normal = -collisionDeets .normal;
 
-		//cout << "No Gap between: " << obj1->name << ", " << obj2->name << endl;
+		cout << "No Gap between: " << obj1->name << ", " << obj2->name << endl;
 		collisionDeets.overlapped = true;
 		return collisionDeets;
 }

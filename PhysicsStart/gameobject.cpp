@@ -61,13 +61,12 @@ void GameObject::Render(Shader &complexShader) {
 	if (bounds.empty()) {
 		CalculateBounds();
 	}
-	else {
+	/*else {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		if (drawBBs == 2) {
-			glm::mat4 bbModelMat;
+			glm::mat4 bbModelMat = glm::mat4(1.f);
 			for (unsigned int i = 0; i < bounds.size(); i += 2) {
 				bbPos = glm::vec3((bounds[i].x + bounds[i + 1].x) / 2, (bounds[i].y + bounds[i + 1].y) / 2, (bounds[i].z + bounds[i + 1].z) / 2);
-				bbModelMat = glm::mat4(1.f);
 				bbModelMat = glm::translate(bbModelMat, bbPos);
 				complexShader.setMat4("model", bbModelMat);
 				boundingBox.Draw(complexShader);
@@ -75,22 +74,29 @@ void GameObject::Render(Shader &complexShader) {
 		}
 		else if (drawBBs == 1) {
 			bbPos = glm::vec3((bounds[0].x + bounds[1].x) / 2, (bounds[0].y + bounds[1].y) / 2, (bounds[0].z + bounds[1].z) / 2);
-			bbModelMat = glm::mat4(1.f);
 			bbModelMat = glm::translate(bbModelMat, bbPos);
 			complexShader.setMat4("model", bbModelMat);
 			boundingBox.Draw(complexShader);
 		}
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}*/
+	//Draw collision normal line
+	glm::mat4 collisionMat = glm::mat4(1.f);
+	collisionMat = glm::translate(collisionMat, collisionNormalLine);
+	complexShader.setMat4("model", collisionMat);
+	if (!collisionLineMesh.vertices.size() == 0 && resolveCollisions) {
+		collisionLineMesh.Draw(complexShader);
 	}
+
 }
 
 void GameObject::Update(float deltaTime = 0.f) {
 	prevPos = position;
 	if (gravity && !staticObj && name != "player") {
-		velocity.y += gravityForce * deltaTime;
+		//velocity.y += gravityForce * deltaTime;
 	}
 	if (velocity.x > 3.f) velocity.x = 3.f;
-	if (velocity.y > 0.f) velocity.y = 0.f;
+	if (velocity.y > 3.f) velocity.y = 3.f;
 	if (velocity.z > 3.f) velocity.z = 3.f;
 	position += velocity;
 	velocity = glm::vec3(0, 0, 0);
@@ -115,30 +121,32 @@ void GameObject::LoopVertices() {
 	bottom = -(bbHeight / 2);
 	front = (bbDepth / 2);
 	back = -(bbDepth / 2);
-	for (unsigned int j = 0; j < model->meshes.size(); j++) {
-		for (unsigned int i = 0; i < model->meshes[j].vertices.size(); i++) {
-			glm::vec3 posToCheck = model->meshes[j].vertices[i].Position;
-			if (posToCheck.x > right) {
-				right = posToCheck.x;
+	/*if (!model->meshes.size() == 0) {
+		for (unsigned int j = 0; j < model->meshes.size(); j++) {
+			for (unsigned int i = 0; i < model->meshes[j].vertices.size(); i++) {
+				glm::vec3 posToCheck = model->meshes[j].vertices[i].Position;
+				if (posToCheck.x > right) {
+					right = posToCheck.x;
+				}
+				if (posToCheck.x < left) {
+					left = posToCheck.x;
+				}
+				if (posToCheck.y > top) {
+					top = posToCheck.y;
+				}
+				if (posToCheck.y < bottom) {
+					bottom = posToCheck.y;
+				}
+				if (posToCheck.z > front) {
+					front = posToCheck.z;
+				}
+				if (posToCheck.z < back) {
+					back = posToCheck.z;
+				}
+				//cout << posToCheck.x << ", " << posToCheck.y << ", " << posToCheck.z << endl;
 			}
-			if (posToCheck.x < left) {
-				left = posToCheck.x;
-			}
-			if (posToCheck.y > top) {
-				top = posToCheck.y;
-			}
-			if (posToCheck.y < bottom) {
-				bottom = posToCheck.y;
-			}
-			if (posToCheck.z > front) {
-				front = posToCheck.z;
-			}
-			if (posToCheck.z < back) {
-				back = posToCheck.z;
-			}
-			//cout << posToCheck.x << ", " << posToCheck.y << ", " << posToCheck.z << endl;
 		}
-	}
+	}*/
 
 	float s = 0.25f;
 
@@ -242,7 +250,7 @@ void GameObject::Collisions(GameObject* other, float deltaTime) {
 			if (i == 0) {
 				/*if (!isTrigger) {
 					isBottom = true;
-					resolveCollisions = true;
+
 					if (std::find(collidingWith.begin(), collidingWith.end(), other->name) == collidingWith.end()) {
 						if (this->name == "player") cout << name << ": Begin Overlap with: " << other->name << endl;
 						collidingWith.push_back(other->name);
@@ -254,9 +262,11 @@ void GameObject::Collisions(GameObject* other, float deltaTime) {
 				//continue;*/
 			}
 			if (!isTrigger) {
+				resolveCollisions = true;
 				HandleCollision(i, other);
 			}
 		}
+		else resolveCollisions = false;
 		/*for (unsigned int c = 0; c < collidingWith.size(); c++) {
 			if (other->name == collidingWith[c]) {
 				if (resolveCollisions && (i == 0) && (!x || !y || !z)) {
@@ -274,11 +284,23 @@ void GameObject::Collisions(GameObject* other, float deltaTime) {
 	}
 }
 void GameObject::HandleCollision(int side, GameObject* other) {
-	CollisionDetails cI = IsOverlapped(this, other);
+	/*CollisionDetails cI = IsOverlapped(this, other);
+	collisionNormalLine = cI.normal + position;
+	vector<Vertex> lineVerts;
+	vector<unsigned int> lineIndices;
+	lineVerts.push_back(Vertex(glm::vec3(position.x - 1, position.y - 1, position.z - 1), glm::vec2(0), glm::vec3(0)));
+	lineVerts.push_back(Vertex(glm::vec3(position.x, position.y, position.z), glm::vec2(0), glm::vec3(0)));
+	lineVerts.push_back(Vertex(glm::vec3(cI.normal.x - 1, cI.normal.y - 1, cI.normal.z - 1), glm::vec2(1), glm::vec3(0)));
+	lineVerts.push_back(Vertex(glm::vec3(cI.normal.x, cI.normal.y, cI.normal.z), glm::vec2(1), glm::vec3(0)));
+
+	lineIndices = 
+	{ 2, 3, 1,
+	2, 1, 0};
+	collisionLineMesh = Mesh(lineVerts, lineIndices);
 	if (cI.overlapped) {
-		this->velocity = (-cI.normal * cI.depth / 2.f);
-		if (!other->staticObj) other->velocity = (cI.normal * cI.depth / 2.f);
-	}
+		//this->velocity = (-cI.normal * cI.depth / 2.f);
+		//if (!other->staticObj) other->velocity = (cI.normal * cI.depth / 2.f);
+	}*/
 }
 
 void GameObject::OnOverlap(GameObject* other) { }

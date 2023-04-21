@@ -154,6 +154,7 @@
     <ClInclude Include="cube.h" />
     <ClInclude Include="gameobject.h" />
     <ClInclude Include="gameobjectchildren.h" />
+    <ClInclude Include="line.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="primitives.h" />
     <ClInclude Include="rigidbody.h" />

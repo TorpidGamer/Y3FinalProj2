@@ -120,7 +120,7 @@ int main() {
     cameraGO.scale = glm::vec3(0.f);
 
     camera.playerChar = &player;
-    camera.playerChar->gravity = false;
+    //camera.playerChar->gravity = false;
     currentScene = new Scene("Current");
 
     glm::vec3 pointLightPos[4] = {
@@ -167,12 +167,11 @@ int main() {
     scenes["Procedural"] = new ProceduralScene("Procedural");
 
     if (!scenes.empty()) {
-        currentScene = LoadScene(currentScene, "Test", &camera);
+        currentScene = LoadScene(currentScene, "Procedural", &camera);
     }
     else cout << "No Scene To Load" << endl;
     // render loop
     // -----------
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     while (!glfwWindowShouldClose(window))
     {
         // TIME LOGIC
