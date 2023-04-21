@@ -94,11 +94,11 @@ public:
         models["maxwell"] = model;
         models["car"] = car;       
         testScene->playerStartPos = glm::vec3(1.f, 2.f, 1.f);
-        Goal* goal = new Goal(models["cubeMesh"], glm::vec3(0, 0, 10), glm::vec3(0), glm::vec3(1), glm::vec3(0), "Level1");
+        GameObject* goal = new GameObject(models["cubeMesh"], glm::vec3(0, 0, 10), glm::vec3(0), glm::vec3(1), glm::vec3(0), "Test");
         GameObject* floor = new GameObject(models["cubeMesh"], glm::vec3(0.f, -10.f, 0.f), glm::vec3(0.f), glm::vec3(30.f, 2.f, 30.f), glm::vec3(0), "floor");
-        GameObject* maxwell = new GameObject(models["maxwell"], glm::vec3(0.f, 0.f, 5.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(.33f), glm::vec3(0), "maxwell");
+        //GameObject* maxwell = new GameObject(models["maxwell"], glm::vec3(0.f, 0.f, 5.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(.33f), glm::vec3(0), "maxwell");
         GameObject* carGO = new GameObject(models["car"], glm::vec3(10.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f), glm::vec3(0), "car");
-        GameObject* window1 = new GameObject(models["quadMesh"], glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "window1");
+        /*GameObject* window1 = new GameObject(models["quadMesh"], glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "window1");
         GameObject* window2 = new GameObject(models["quadMesh"], glm::vec3(2.f, 0.f, -4.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "window2");
         GameObject* window3 = new GameObject(models["quadMesh"], glm::vec3(1.f, 0.f, -6.f), glm::vec3(0.f, 90.f, 0.f), glm::vec3(1.f), glm::vec3(0), "window3");
         GameObject* window4 = new GameObject(models["quadMesh"], glm::vec3(0.f, 0.f, -10.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "window4");
@@ -106,18 +106,19 @@ public:
         window1->transparent = true;
         window2->transparent = true;
         window3->transparent = true;
-        window4->transparent = true;
-        maxwell->transparent = true;
+        window4->transparent = true;*/
+        //maxwell->transparent = true;
 
         floor->staticObj = true;
+        //maxwell->staticObj = true;
 
-        testScene->sceneGOs["window1"] = window1;
+        /*testScene->sceneGOs["window1"] = window1;
         testScene->sceneGOs["window2"] = window2;
         testScene->sceneGOs["window3"] = window3;
-        testScene->sceneGOs["window4"] = window4;
+        testScene->sceneGOs["window4"] = window4;*/
 
         testScene->sceneGOs["goal"] = goal;
-        testScene->sceneGOs["maxwell"] = maxwell;
+        //testScene->sceneGOs["maxwell"] = maxwell;
         testScene->sceneGOs["car"] = carGO;
         testScene->sceneGOs["floor"] = floor;
 

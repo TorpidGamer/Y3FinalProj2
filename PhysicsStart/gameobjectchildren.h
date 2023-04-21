@@ -9,6 +9,6 @@ public :
 
 	string nextScene;
 	virtual void OnOverlap(GameObject* other) override{
-		cout << nextScene << endl;
+		//cout << nextScene << endl;
 	}
 };

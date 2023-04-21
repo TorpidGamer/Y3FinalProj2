@@ -1,4 +1,5 @@
 #include "gameobject.h"
+#include "sat.h"
 
 GameObject::GameObject(Model* model, glm::vec3 position = glm::vec3(0.f),
 	glm::vec3 rotation = glm::vec3(0.f), glm::vec3 scale = glm::vec3(1.f), glm::vec3 bbDimensions = glm::vec3(0.f), string name = "") {
@@ -79,21 +80,20 @@ void GameObject::Render(Shader &complexShader) {
 			complexShader.setMat4("model", bbModelMat);
 			boundingBox.Draw(complexShader);
 		}
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 }
 
 void GameObject::Update(float deltaTime = 0.f) {
 	prevPos = position;
-	if (gravity && !staticObj) {
-		//velocity.y += gravityForce * deltaTime;
+	if (gravity && !staticObj && name != "player") {
+		velocity.y += gravityForce * deltaTime;
 	}
 	if (velocity.x > 3.f) velocity.x = 3.f;
 	if (velocity.y > 0.f) velocity.y = 0.f;
 	if (velocity.z > 3.f) velocity.z = 3.f;
 	position += velocity;
 	velocity = glm::vec3(0, 0, 0);
-	//position.y -= .8f * deltaTime;
 	//cout << position.x << endl;
 }
 
@@ -115,7 +115,7 @@ void GameObject::LoopVertices() {
 	bottom = -(bbHeight / 2);
 	front = (bbDepth / 2);
 	back = -(bbDepth / 2);
-	/*for (unsigned int j = 0; j < model->meshes.size(); j++) {
+	for (unsigned int j = 0; j < model->meshes.size(); j++) {
 		for (unsigned int i = 0; i < model->meshes[j].vertices.size(); i++) {
 			glm::vec3 posToCheck = model->meshes[j].vertices[i].Position;
 			if (posToCheck.x > right) {
@@ -138,13 +138,19 @@ void GameObject::LoopVertices() {
 			}
 			//cout << posToCheck.x << ", " << posToCheck.y << ", " << posToCheck.z << endl;
 		}
-	}*/
-	top *= scale.y;
-	bottom *= scale.y;
-	left *= scale.x;
-	right *= scale.x;
-	front *= scale.z;
-	back *= scale.z;
+	}
+
+	float s = 0.25f;
+
+	top *= scale.y + s;
+	bottom *= scale.y + s;
+	left *= scale.x + s;
+	right *= scale.x + s;
+	front *= scale.z + s;
+	back *= scale.z + s;
+
+
+
 	RightTopFront = glm::vec3(right, top, front);
 	LeftBottomBack = glm::vec3(left, bottom, back);
 	vector<Vertex> primitiveVertices = {
@@ -222,7 +228,7 @@ void GameObject::Collisions(GameObject* other, float deltaTime) {
 	float collisionSpeed = 5;
 
 	//Use indices of object as index for vertices to calculate edges
-
+	if (staticObj) return;
 	bool x, y, z;
 	for (unsigned int i = 0; i < bounds.size(); i += 2) {
 		if (min(bounds[i].x, other->bounds[i].x) > max(bounds[i + 1].x, other->bounds[i + 1].x)) /*X overlap*/ x = true;
@@ -234,7 +240,7 @@ void GameObject::Collisions(GameObject* other, float deltaTime) {
 
 		if (x && y && z) {
 			if (i == 0) {
-				if (!isTrigger) {
+				/*if (!isTrigger) {
 					isBottom = true;
 					resolveCollisions = true;
 					if (std::find(collidingWith.begin(), collidingWith.end(), other->name) == collidingWith.end()) {
@@ -245,13 +251,13 @@ void GameObject::Collisions(GameObject* other, float deltaTime) {
 				else {
 					OnOverlap(other);
 				}
-				//continue;
+				//continue;*/
 			}
 			if (!isTrigger) {
 				HandleCollision(i, other);
 			}
 		}
-		for (unsigned int c = 0; c < collidingWith.size(); c++) {
+		/*for (unsigned int c = 0; c < collidingWith.size(); c++) {
 			if (other->name == collidingWith[c]) {
 				if (resolveCollisions && (i == 0) && (!x || !y || !z)) {
 					resolveCollisions = false;
@@ -260,7 +266,7 @@ void GameObject::Collisions(GameObject* other, float deltaTime) {
 					collidingWith.erase(collidingWith.begin() + c);
 				}
 			}
-		}
+		}*/
 	}
 	if (!isBottom) {
 		//cout << "NotBottom" << endl;
@@ -268,18 +274,10 @@ void GameObject::Collisions(GameObject* other, float deltaTime) {
 	}
 }
 void GameObject::HandleCollision(int side, GameObject* other) {
-	if (!staticObj) {
-		float collisionSpeed = 6.f;
-		glm::vec3 velocityResolution = glm::vec3(0);
-		if (resolveCollisions && other->resolveCollisions) {
-			//cout << side << endl;
-			if (!noMesh) { // If we have a mesh
-				if (!other->noMesh) { // If the other has a mesh
-					
-				}
-			}
-		}
-		gravity = false;
+	CollisionDetails cI = IsOverlapped(this, other);
+	if (cI.overlapped) {
+		this->velocity = (-cI.normal * cI.depth / 2.f);
+		if (!other->staticObj) other->velocity = (cI.normal * cI.depth / 2.f);
 	}
 }
 

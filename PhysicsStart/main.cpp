@@ -167,7 +167,7 @@ int main() {
     scenes["Procedural"] = new ProceduralScene("Procedural");
 
     if (!scenes.empty()) {
-        currentScene = LoadScene(currentScene, "Procedural", &camera);
+        currentScene = LoadScene(currentScene, "Test", &camera);
     }
     else cout << "No Scene To Load" << endl;
     // render loop
@@ -258,13 +258,15 @@ void Update() {
     angle = currentFrame * 50;
     for (auto it = currentScene->sceneGOs.begin(); it != currentScene->sceneGOs.end(); it++) {
         for (auto jit = currentScene->sceneGOs.begin(); jit != currentScene->sceneGOs.end(); jit++) {
-            it->second->Collisions(jit->second, deltaTime);
+            /*if (it->second->name != "player" && jit->second->name != "player")*/ it->second->Collisions(jit->second, deltaTime);
+            //if (jit->second != it->second && (it->second->name != "player" || jit->second->name != "player")) it->second->HandleCollision(0, jit->second);
             /*if (j <= i) {
                 //Skip
             }
             else {
                 if (!sceneGOs[i]->staticObj) sceneGOs[i]->Collisions(sceneGOs[j], deltaTime);
             }*/
+
         }
         it->second->Update(deltaTime);
 
@@ -383,7 +385,7 @@ void ProcessInputs(GLFWwindow* window) {
     }
     if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
         if (sceneLoaded) {
-            currentScene = LoadScene(currentScene, "Level1", &camera);
+            //currentScene = LoadScene(currentScene, "Level1", &camera);
         }
     }
 }
