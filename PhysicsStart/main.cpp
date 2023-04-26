@@ -216,7 +216,7 @@ int main() {
                 Update();   // - Update function
                 numUpdates++;
                 //Test collisions
-                CheckCollisions();
+                //CheckCollisions();
             }
             else {
                 cout << "Waiting on scene load" << endl;

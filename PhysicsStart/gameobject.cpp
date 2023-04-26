@@ -37,27 +37,11 @@ void GameObject::Render(Shader &complexShader) {
 		complexShader.setMat4("model", staticModel);
 		model->Draw(complexShader);
 	}
-	if (!(model == nullptr)) {
+	else {
 		complexShader.setMat4("model", CalculateMatrix());
 		model->Draw(complexShader);
 	}
-	//else cout << "No Model" << endl;
-	//Static objects shouldnt need recalculated matrices per frame
-	/*else {
-		if (staticModel == glm::mat4(0.f)) {
-			staticModel = CalculateMatrix();
-		}
-		if (!noMesh) {
-			if (model == nullptr) {
-				complexShader.setMat4("model", staticModel);
-				mesh->Draw(complexShader);
-			}
-			else {
-				complexShader.setMat4("model", staticModel);
-				model->Draw(complexShader);
-			}
-		}
-	}*/
+
 	//Bounding Box Section
 	glm::mat4 bbModelMat;
 	glm::vec3 bbPos;
@@ -72,14 +56,14 @@ void GameObject::Render(Shader &complexShader) {
 				bbPos = glm::vec3((bounds[i].x + bounds[i + 1].x) / 2, (bounds[i].y + bounds[i + 1].y) / 2, (bounds[i].z + bounds[i + 1].z) / 2);
 				bbModelMat = glm::translate(bbModelMat, bbPos);
 				complexShader.setMat4("model", bbModelMat);
-				boundingBox.Draw(complexShader);
+				//boundingBox.Draw(complexShader);
 			}
 		}
 		else if (drawBBs == 1) {
 			bbPos = glm::vec3((bounds[0].x + bounds[1].x) / 2, (bounds[0].y + bounds[1].y) / 2, (bounds[0].z + bounds[1].z) / 2);
 			bbModelMat = glm::translate(bbModelMat, bbPos);
 			complexShader.setMat4("model", bbModelMat);
-			boundingBox.Draw(complexShader);
+			//boundingBox.Draw(complexShader);
 		}
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
@@ -114,6 +98,9 @@ void GameObject::CountVertices() {
 //For loop to find the minimum and maximum of the vertices, use imbetween for sides
 void GameObject::LoopVertices() {
 	meshSize = model == nullptr ? 8 : model->meshes[0].vertices.size();
+	if (staticModel == glm::mat4(0.f)) {
+		staticModel = CalculateMatrix();
+	}
 	float top, bottom, left, right, front, back;
 	right = (bbWidth / 2);
 	left = -(bbWidth / 2);
@@ -122,7 +109,7 @@ void GameObject::LoopVertices() {
 	front = (bbDepth / 2);
 	back = -(bbDepth / 2);
 	if (!(model->meshes.size() == 0)) {
-		//for (unsigned int j = 0; j < model->meshes.size(); j++) {
+		for (unsigned int j = 0; j < model->meshes.size(); j++) {
 			for (unsigned int i = 0; i < model->meshes[0].vertices.size(); i++) {
 				glm::vec3 posToCheck = model->meshes[0].vertices[i].Position;
 				if (posToCheck.x > right) {
@@ -145,7 +132,7 @@ void GameObject::LoopVertices() {
 				}
 				//cout << posToCheck.x << ", " << posToCheck.y << ", " << posToCheck.z << endl;
 			}
-		//}
+		}
 	}
 
 	float s = 1.f;

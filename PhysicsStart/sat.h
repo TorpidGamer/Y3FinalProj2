@@ -43,7 +43,10 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 			unsigned int index = obj1->model->meshes[0].indices[i];
 			glm::vec3 testVec3 = obj1->model->meshes[0].vertices[index].Position + obj1Pos;
 			glm::vec2 testVec2(testVec3.x, testVec3.z);
-			if (PointInCircle(testVec2, circlePos2, circleRadius)) continue;
+			if (PointInCircle(testVec2, circlePos2, circleRadius)) {
+				//cout << "Outside of radius, discarding" << endl;
+				continue;
+			}
 			glm::vec3 p1 = obj1->model->meshes[0].vertices[index].Position;
 			glm::vec3 p2 = obj1->model->meshes[0].vertices[index+1].Position;
 			glm::vec3 p3 = obj1->model->meshes[0].vertices[index+2].Position;
@@ -63,11 +66,17 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 			unsigned int index = obj2->model->meshes[0].indices[i];
 			glm::vec3 testVec3 = obj2->model->meshes[0].vertices[index].Position + obj2Pos;
 			glm::vec2 testVec2(testVec3.x, testVec3.z);
-			if (PointInCircle(testVec2, circlePos1, circleRadius)) continue;
+			if (PointInCircle(testVec2, circlePos1, circleRadius)) {
+				//cout << "Outside of radius, discarding" << endl;
+				continue;
+			}
 			glm::vec3 p1 = obj2->model->meshes[0].vertices[index].Position;
 			glm::vec3 p2 = obj2->model->meshes[0].vertices[(index + 1) % obj2->model->meshes[0].indices.size()].Position;
 			glm::vec3 p3 = obj2->model->meshes[0].vertices[(index + 2) % obj2->model->meshes[0].indices.size()].Position;
-
+			if (isnan(p1.x) || isnan(p1.y) || isnan(p1.z)) {
+				cout << "index: " << index << " is nan" << endl;
+				continue;
+			}
 			glm::vec3 u = p2 - p1;
 			glm::vec3 v = p3 - p1;
 
@@ -152,6 +161,10 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 		}
 
 		for (int i = 0; i < obj2Edges.size(); i++) {
+			if (obj1Edges.size() == 0) {
+				cout << "No edges on Obj1" << endl;
+				return collisionDeets;
+			}
 			glm::vec3 axis = glm::cross(obj2Edges[i], obj1Edges[i % obj1Edges.size()]);
 
 			glm::vec2 project1, project2;

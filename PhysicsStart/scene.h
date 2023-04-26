@@ -156,8 +156,8 @@ class ProceduralScene : public Scene {
 public:
     static const int mapWidth = 10;
     static const int mapHeight = 10;
-    static const int chunkWidth = 500;
-    static const int chunkHeight = 500;
+    static const int chunkWidth = 1000;
+    static const int chunkHeight = 1000;
     float scale = 0.01f;
     float heightMap[chunkWidth][chunkHeight];
     float textureMap[chunkWidth][chunkHeight];
@@ -238,7 +238,8 @@ public:
         cout << endl;*/
         GenerateNoiseData();
         models["generatedMeshChunk " + to_string(chunkIndex)] = new Model(Mesh(meshData.GenerateMesh()));
-        scene->sceneGOs["mapChunk " + to_string(chunkIndex)] = new GameObject(models["generatedMeshChunk " + to_string(chunkIndex)], glm::vec3(offsetX, -10.f, -offsetY), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
+        cout << models["generatedMeshChunk " + to_string(chunkIndex)]->meshes[0].vertices.size() << endl;
+        scene->sceneGOs["mapChunk " + to_string(chunkIndex)] = new GameObject(models["generatedMeshChunk " + to_string(chunkIndex)], glm::vec3(offsetX, -15.f, -offsetY), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
         scene->sceneGOs["mapChunk " + to_string(chunkIndex)]->staticObj = true;
 
     }
