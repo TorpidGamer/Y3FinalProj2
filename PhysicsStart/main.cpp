@@ -14,6 +14,7 @@
 
 #include "common.h"
 #include "gameobjectchildren.h"
+#include "sat.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
@@ -29,6 +30,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void Update();
 void Render(map<string, GameObject*> renderList, Shader& shader);
+void CheckCollisions();
 vector<Timer> timers;
 Timer playerJumpTimer(.1f, Timer::Stop);
 glm::vec3 RandomPos(int x = 1, int y = 1, int z = 1);
@@ -112,14 +114,11 @@ int main() {
     shaderPointer = &ourShader;
     Shader lightShader("simpleShader.vs", "simpleShader.fs");
 
-    Primitives playerPrim;
-    Model playerMesh = playerPrim.CreateModel(Primitives::Cube);
 
-    GameObject player(&playerMesh, glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "player");
     GameObject cameraGO("camera");
     cameraGO.scale = glm::vec3(0.f);
 
-    camera.playerChar = &player;
+    camera.playerChar = player;
     //camera.playerChar->gravity = false;
     currentScene = new Scene("Current");
 
@@ -182,7 +181,7 @@ int main() {
             deltaTime = deltaTimeCap;
         }
         if (limitedDT > 2.0) {
-            limitedDT = 1.0;
+            limitedDT -= 1.0;
         }
         lastFrame = currentFrame;
         lastTime = currentFrame;
@@ -213,8 +212,15 @@ int main() {
         // - Only update at 60 frames / s
         if (limitedDT >= 1.0) {
             limitedDT--;
-            Update();   // - Update function
-            numUpdates++;
+            if (sceneLoaded) {
+                Update();   // - Update function
+                numUpdates++;
+                //Test collisions
+                CheckCollisions();
+            }
+            else {
+                cout << "Waiting on scene load" << endl;
+            }
         }
         // - Render at maximum possible frames
         // camera transformations
@@ -252,12 +258,34 @@ int main() {
     return 0;
 }
 
+void CheckCollisions() {
+    for (auto it = currentScene->sceneGOs.begin(); it != currentScene->sceneGOs.end(); it++) {
+        for (auto jit = currentScene->sceneGOs.begin(); jit != currentScene->sceneGOs.end(); jit++) {
+            it->second->Collisions(jit->second, deltaTime);
+            //CollisionDetails collision = IsOverlapped(it->second, jit->second);
+            if (it->second != jit->second) {
+                if (it->second->resolveCollisions && jit->second->resolveCollisions) {
+                    //cout << "objects: " << it->second->name << " and " << jit->second->name << "need resolving" << endl;
+                    CollisionDetails collision = IsOverlapped(it->second, jit->second);
+                    if (collision.overlapped) {
+                        if ((!it->second->isTrigger && !jit->second->isTrigger)) {
+                            collision.normal.y = 0;
+                            if (!it->second->staticObj) it->second->velocity += -collision.normal * collision.depth / 2.f;
+                            if (!jit->second->staticObj) jit->second->velocity += collision.normal * collision.depth / 2.f;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 void Update() {
     float angle;
     angle = currentFrame * 50;
     for (auto it = currentScene->sceneGOs.begin(); it != currentScene->sceneGOs.end(); it++) {
         for (auto jit = currentScene->sceneGOs.begin(); jit != currentScene->sceneGOs.end(); jit++) {
-            /*if (it->second->name != "player" && jit->second->name != "player")*/ it->second->Collisions(jit->second, deltaTime);
+            /*if (it->second->name != "player" && jit->second->name != "player")*/ 
             //if (jit->second != it->second && (it->second->name != "player" || jit->second->name != "player")) it->second->HandleCollision(0, jit->second);
             /*if (j <= i) {
                 //Skip
@@ -265,7 +293,9 @@ void Update() {
             else {
                 if (!sceneGOs[i]->staticObj) sceneGOs[i]->Collisions(sceneGOs[j], deltaTime);
             }*/
-
+            /*if (jit->second != it->second) {
+                it->second->HandleCollision(0, jit->second);
+            }*/
         }
         it->second->Update(deltaTime);
 
@@ -277,7 +307,7 @@ void Update() {
             it->second->Rotate(0.f, 0.f, angle);
         }
         else if (it->second->name == "maxwell") {
-            it->second->Rotate(0.f, -90.f, angle);
+            //it->second->Rotate(0.f, -90.f, angle);
         }
     }
 

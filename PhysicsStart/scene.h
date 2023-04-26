@@ -14,6 +14,10 @@ bool sceneLoaded = false;
 float PerlinNoise(float x, float y);
 float Lerp(float t, float var1, float var2);
 float FractalBrownianMotion(float x, float y, int numOctaves);
+Primitives playerPrim;
+Model* playerMesh;
+GameObject* player;
+
 class Scene {
 public:
     int id;
@@ -34,11 +38,6 @@ public:
 
     void Unload() {
         if (!models.empty()) {
-            for (auto it = models.begin(); it != models.end(); it++) {
-                delete it->second;
-            }
-        }
-        if (!models.empty()) {
             for (map<string, Model*>::iterator it = models.begin(); it != models.end(); it++) {
                 delete it->second;
             }
@@ -46,14 +45,10 @@ public:
         if (!sceneGOs.empty()) {
             for (map<string, GameObject*>::iterator it = sceneGOs.begin(); it != sceneGOs.end(); it++) {
                 //cout << it->first << endl;
-                if (it->first == "player") {
-                    continue;
-                }
                 delete it->second;
             }
             sceneGOs.clear();
         }
-        models.clear();
         models.clear();
     }
 };
@@ -67,10 +62,12 @@ Scene* LoadScene(Scene* currentScene, string sceneToLoad, Camera* cam) {
         cout << "Not a valid Scene" << endl;
         return LoadScene(currentScene, "Test", cam);
     }
-    scenes.at(sceneToLoad)->sceneGOs["player"] = cam->playerChar;
-    cam->playerChar->position = scenes.at(sceneToLoad)->playerStartPos;
-    cam->playerChar->gravity = true;
+    playerMesh = new Model(playerPrim.CreateModel(Primitives::Cube));
+    player = new GameObject(playerMesh, glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "player");
+    cam->playerChar = player;
+    player->position = scenes.at(sceneToLoad)->playerStartPos;
     Scene* temp = scenes.at(sceneToLoad)->InitScene();
+    temp->sceneGOs["player"] = player;
     sceneLoaded = true;
     for (map<string, GameObject*>::iterator it = currentScene->sceneGOs.begin(); it != currentScene->sceneGOs.end(); it++) {
         cout << it->first << endl;
@@ -94,10 +91,10 @@ public:
         models["maxwell"] = model;
         models["car"] = car;       
         testScene->playerStartPos = glm::vec3(1.f, 2.f, 1.f);
-        GameObject* goal = new GameObject(models["cubeMesh"], glm::vec3(0, 0, 10), glm::vec3(0), glm::vec3(1), glm::vec3(0), "Test");
+        GameObject* goal = new GameObject(models["cubeMesh"], glm::vec3(0, 0.f, 10), glm::vec3(0), glm::vec3(1), glm::vec3(0), "Test");
         GameObject* floor = new GameObject(models["cubeMesh"], glm::vec3(0.f, -10.f, 0.f), glm::vec3(0.f), glm::vec3(30.f, 2.f, 30.f), glm::vec3(0), "floor");
         //GameObject* maxwell = new GameObject(models["maxwell"], glm::vec3(0.f, 0.f, 5.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(.33f), glm::vec3(0), "maxwell");
-        //GameObject* carGO = new GameObject(models["car"], glm::vec3(10.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f), glm::vec3(0), "car");
+        GameObject* carGO = new GameObject(models["car"], glm::vec3(10.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f), glm::vec3(0), "car");
         /*GameObject* window1 = new GameObject(models["quadMesh"], glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "window1");
         GameObject* window2 = new GameObject(models["quadMesh"], glm::vec3(2.f, 0.f, -4.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "window2");
         GameObject* window3 = new GameObject(models["quadMesh"], glm::vec3(1.f, 0.f, -6.f), glm::vec3(0.f, 90.f, 0.f), glm::vec3(1.f), glm::vec3(0), "window3");
@@ -119,7 +116,7 @@ public:
 
         testScene->sceneGOs["goal"] = goal;
         //testScene->sceneGOs["maxwell"] = maxwell;
-        //testScene->sceneGOs["car"] = carGO;
+        testScene->sceneGOs["car"] = carGO;
         testScene->sceneGOs["floor"] = floor;
 
         return testScene;
@@ -242,7 +239,7 @@ public:
         GenerateNoiseData();
         models["generatedMeshChunk " + to_string(chunkIndex)] = new Model(Mesh(meshData.GenerateMesh()));
         scene->sceneGOs["mapChunk " + to_string(chunkIndex)] = new GameObject(models["generatedMeshChunk " + to_string(chunkIndex)], glm::vec3(offsetX, -10.f, -offsetY), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
-
+        scene->sceneGOs["mapChunk " + to_string(chunkIndex)]->staticObj = true;
 
     }
 
@@ -252,10 +249,10 @@ public:
         
         GenerateMapGOs(scene);
 
-        GameObject* floor = new GameObject(models["generatedMesh"], glm::vec3(0.f, -20.f, 0.f), glm::vec3(0.f), glm::vec3(1.f, 1.f, 1.f), glm::vec3(0), "floor");
-        floor->staticObj = true;
+        //GameObject* floor = new GameObject(models["generatedMeshChunk" ], glm::vec3(0.f, -20.f, 0.f), glm::vec3(0.f), glm::vec3(1.f, 1.f, 1.f), glm::vec3(0), "floor");
+        //floor->staticObj = true;
 
-        scene->sceneGOs["floor"] = floor;
+        //scene->sceneGOs["floor"] = floor;
 
         return scene;
     }
