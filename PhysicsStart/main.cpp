@@ -216,7 +216,7 @@ int main() {
                 Update();   // - Update function
                 numUpdates++;
                 //Test collisions
-                //CheckCollisions();
+                CheckCollisions();
             }
             else {
                 cout << "Waiting on scene load" << endl;
@@ -269,7 +269,7 @@ void CheckCollisions() {
                     CollisionDetails collision = IsOverlapped(it->second, jit->second);
                     if (collision.overlapped) {
                         if ((!it->second->isTrigger && !jit->second->isTrigger)) {
-                            collision.normal.y = 0;
+                            //collision.normal.y = 0;
                             if (!it->second->staticObj) it->second->velocity += -collision.normal * collision.depth / 2.f;
                             if (!jit->second->staticObj) jit->second->velocity += collision.normal * collision.depth / 2.f;
                         }
@@ -377,14 +377,15 @@ void ProcessInputs(GLFWwindow* window) {
         camera.ProcessKeyboard(RIGHT, deltaTime);
 
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        if (camera.playerChar->gravity == false && !playerJumpTimer.isStarted) {
-            //Jump reaches about 0.8 in height
-            jumpHold = 0;
-            playerJumpTimer.isStarted = true;
-        }
-        else {
-            jumpHold += 0.06 * deltaTime;
-        }
+        //if (camera.playerChar->gravity == false && !playerJumpTimer.isStarted) {
+        //    //Jump reaches about 0.8 in height
+        //    jumpHold = 0;
+        //    playerJumpTimer.isStarted = true;
+        //}
+        //else {
+        //    jumpHold += 0.06 * deltaTime;
+        //}
+        camera.playerChar->velocity.y = 0.33f;
     }
 
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
@@ -394,7 +395,7 @@ void ProcessInputs(GLFWwindow* window) {
     }
 
     if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
-        camera.playerChar->gravity = !camera.playerChar->gravity;
+        camera.playerChar->velocity.y = -.33f;
     }
 
     if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
@@ -414,7 +415,7 @@ void ProcessInputs(GLFWwindow* window) {
     }
     if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
         if (sceneLoaded) {
-            //currentScene = LoadScene(currentScene, "Level1", &camera);
+            currentScene = LoadScene(currentScene, "Procedural", &camera);
         }
     }
 }

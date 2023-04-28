@@ -65,7 +65,7 @@ void GameObject::Render(Shader &complexShader) {
 			complexShader.setMat4("model", bbModelMat);
 			//boundingBox.Draw(complexShader);
 		}
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 	//Draw collision normal line
 	glm::mat4 collisionMat = glm::mat4(1.f);
@@ -80,7 +80,7 @@ void GameObject::Render(Shader &complexShader) {
 void GameObject::Update(float deltaTime = 0.f) {
 	prevPos = position;
 	if (gravity && !staticObj) {
-		//velocity.y += gravityForce * deltaTime;
+		velocity.y += gravityForce * deltaTime;
 	}
 	position += velocity;
 	velocity *= glm::vec3(0.4, 0.4, 0.4);
@@ -110,8 +110,8 @@ void GameObject::LoopVertices() {
 	back = -(bbDepth / 2);
 	if (!(model->meshes.size() == 0)) {
 		for (unsigned int j = 0; j < model->meshes.size(); j++) {
-			for (unsigned int i = 0; i < model->meshes[0].vertices.size(); i++) {
-				glm::vec3 posToCheck = model->meshes[0].vertices[i].Position;
+			for (unsigned int i = 0; i < model->meshes[j].vertices.size(); i++) {
+				glm::vec3 posToCheck = model->meshes[j].vertices[i].Position;
 				if (posToCheck.x > right) {
 					right = posToCheck.x;
 				}

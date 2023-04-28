@@ -77,6 +77,7 @@ struct Texture {
 class Mesh {
 public:
 	vector<Vertex> vertices;
+	glm::vec3 meshSpaceCenter = glm::vec3(0);
 	vector<unsigned int> indices;
 	vector<Texture> textures;
 	vector<unsigned char> colourPlane;
@@ -137,9 +138,9 @@ public:
 			vertices[vertexIndexB].Normal = triangleNormal;
 			vertices[vertexIndexC].Normal = triangleNormal;
 		}
-		for (int i = 0; i < vertices.size(); i++) {
-			normalize(vertices[i].Normal);
-		}
+		//for (int i = 0; i < vertices.size(); i++) {
+		//	normalize(vertices[i].Normal);
+		//}
 	}
 
 	glm::vec3 SurfaceNormalsFromIndices(int indexA, int indexB, int indexC) {
@@ -241,6 +242,11 @@ public:
 private:
 	unsigned int VBO, EBO;
 	void setupMesh() {
+		for (int i = 0; i < vertices.size(); i++) {
+			meshSpaceCenter += vertices[i].Position;
+		}
+		meshSpaceCenter /= vertices.size();
+
 		CalculateNormals();
 
 		glGenVertexArrays(1, &VAO);

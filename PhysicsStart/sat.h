@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "gameobject.h"
 
 glm::vec2 ProjectVertices(GameObject* verticesToProject, glm::vec3 axis);
@@ -36,20 +35,39 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 	// create circle that can then compare to point we're testing to see if within range
 	glm::vec2 circlePos1 = glm::vec2(obj1->position.x, obj1->position.z), circlePos2 = glm::vec2(obj2->position.x, obj2->position.z);
 	float circleRadius = 5;
+	int meshToTest1 = 0, meshToTest2 = 0;
+	float obj1ClosestMesh = 999, obj2ClosestMesh = 999;
+	for (int i = 0; i < obj1->model->meshes.size(); i++) {
+		float dist = glm::distance(obj1->model->meshes[i].meshSpaceCenter + obj1Pos, obj2->position);
+		if (dist < obj1ClosestMesh) {
+			obj1ClosestMesh = dist;
+			meshToTest1 = i;
+		}
+	}
+	for (int i = 0; i < obj2->model->meshes.size(); i++) {
+		float dist = glm::distance(obj2->model->meshes[i].meshSpaceCenter + obj2Pos, obj1->position);
+		if (dist < obj2ClosestMesh) {
+			obj2ClosestMesh = dist;
+			meshToTest2 = i;
+		}
+	}
+	cout << "Testing obj1: " << obj1->name << ", mesh no. " << meshToTest1 << endl;
+	cout << "Testing obj2: " << obj2->name << ", mesh no. " << meshToTest2 << endl;
 	// use hypot(point
 
 		//create normals and edges
-		for (unsigned int i = 0; i < obj1->model->meshes[0].vertices.size(); i += 3) {
-			unsigned int index = obj1->model->meshes[0].indices[i];
-			glm::vec3 testVec3 = obj1->model->meshes[0].vertices[index].Position + obj1Pos;
+
+		for (unsigned int i = 0; i < obj1->model->meshes[meshToTest1].vertices.size(); i += 3) {
+			unsigned int index = obj1->model->meshes[meshToTest1].indices[i];
+			glm::vec3 testVec3 = obj1->model->meshes[meshToTest1].vertices[index].Position + obj1Pos;
 			glm::vec2 testVec2(testVec3.x, testVec3.z);
-			if (PointInCircle(testVec2, circlePos2, circleRadius)) {
+			//if (PointInCircle(testVec2, circlePos2, circleRadius)) {
 				//cout << "Outside of radius, discarding" << endl;
-				continue;
-			}
-			glm::vec3 p1 = obj1->model->meshes[0].vertices[index].Position;
-			glm::vec3 p2 = obj1->model->meshes[0].vertices[index+1].Position;
-			glm::vec3 p3 = obj1->model->meshes[0].vertices[index+2].Position;
+				//continue;
+			//}
+			glm::vec3 p1 = obj1->model->meshes[meshToTest1].vertices[index].Position;
+			glm::vec3 p2 = obj1->model->meshes[meshToTest1].vertices[index+1].Position;
+			glm::vec3 p3 = obj1->model->meshes[meshToTest1].vertices[index+2].Position;
 
 			glm::vec3 u = p2 - p1;
 			glm::vec3 v = p3 - p1;
@@ -62,17 +80,17 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 			obj1Edges.push_back((u * obj1Scale) + obj1NextPos);
 			obj1Edges.push_back((v * obj1Scale) + obj1NextPos);
 		}
-		for (unsigned int i = 0; i < obj2->model->meshes[0].vertices.size() - 3; i += 3) {
-			unsigned int index = obj2->model->meshes[0].indices[i];
-			glm::vec3 testVec3 = obj2->model->meshes[0].vertices[index].Position + obj2Pos;
+		for (unsigned int i = 0; i < obj2->model->meshes[meshToTest2].vertices.size() - 3; i += 3) {
+			unsigned int index = obj2->model->meshes[meshToTest2].indices[i];
+			glm::vec3 testVec3 = obj2->model->meshes[meshToTest2].vertices[index].Position + obj2Pos;
 			glm::vec2 testVec2(testVec3.x, testVec3.z);
-			if (PointInCircle(testVec2, circlePos1, circleRadius)) {
+			//if (PointInCircle(testVec2, circlePos1, circleRadius)) {
 				//cout << "Outside of radius, discarding" << endl;
-				continue;
-			}
-			glm::vec3 p1 = obj2->model->meshes[0].vertices[index].Position;
-			glm::vec3 p2 = obj2->model->meshes[0].vertices[(index + 1) % obj2->model->meshes[0].indices.size()].Position;
-			glm::vec3 p3 = obj2->model->meshes[0].vertices[(index + 2) % obj2->model->meshes[0].indices.size()].Position;
+				//continue;
+			//}
+			glm::vec3 p1 = obj2->model->meshes[meshToTest2].vertices[index].Position;
+			glm::vec3 p2 = obj2->model->meshes[meshToTest2].vertices[(index + 1) % obj2->model->meshes[0].indices.size()].Position;
+			glm::vec3 p3 = obj2->model->meshes[meshToTest2].vertices[(index + 2) % obj2->model->meshes[0].indices.size()].Position;
 			if (isnan(p1.x) || isnan(p1.y) || isnan(p1.z)) {
 				cout << "index: " << index << " is nan" << endl;
 				continue;
@@ -107,6 +125,7 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 			if (axisDepth < collisionDeets.depth) {
 				collisionDeets.depth = axisDepth;
 				collisionDeets.normal = normalsToTest1[i];
+				if (isnan(collisionDeets.normal.x)) cout << "Obj1NormalAxis is nan" << endl;
 			}
 		}
 
@@ -120,7 +139,7 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 
 			if (longSpan > sumSpan) {
 				collisionDeets.overlapped = false;
-				cout << "Normal Test 2 Pass" << endl;
+				//cout << "Normal Test 2 Pass" << endl;
 				return collisionDeets;
 			}
 
@@ -129,13 +148,14 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 			if (axisDepth < collisionDeets.depth) {
 				collisionDeets.depth = axisDepth;
 				collisionDeets.normal = normalsToTest2[i];
+				if (isnan(collisionDeets.normal.x)) cout << "Obj2NormalAxis is nan" << endl;
 			}
 		}
 
 		for (int i = 0; i < obj1Edges.size(); i++) {
 			if (obj2Edges.size() == 0) {
 				cout << "No edges on Obj2" << endl;
-				return collisionDeets;
+				break;
 			}
 			glm::vec3 axis = glm::cross(obj1Edges[i], obj2Edges[i % obj2Edges.size()]);
 
@@ -148,7 +168,7 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 
 			if (longSpan > sumSpan) {
 				collisionDeets.overlapped = false;
-				cout << "Edge Test 1 Pass" << endl;
+				//cout << "Edge Test 1 Pass" << endl;
 				return collisionDeets;
 			}
 
@@ -157,13 +177,14 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 			if (axisDepth < collisionDeets.depth) {
 				collisionDeets.depth = axisDepth;
 				collisionDeets.normal = axis;
+				if (isnan(collisionDeets.normal.x)) cout << "Obj1EdgeAxis is nan" << endl;
 			}
 		}
 
 		for (int i = 0; i < obj2Edges.size(); i++) {
 			if (obj1Edges.size() == 0) {
 				cout << "No edges on Obj1" << endl;
-				return collisionDeets;
+				break;
 			}
 			glm::vec3 axis = glm::cross(obj2Edges[i], obj1Edges[i % obj1Edges.size()]);
 
@@ -176,7 +197,7 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 
 			if (longSpan > sumSpan) {
 				collisionDeets.overlapped = false;
-				cout << "Edge Test 2 Pass" << endl;
+				//cout << "Edge Test 2 Pass" << endl;
 				return collisionDeets;
 			}
 
@@ -185,22 +206,25 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 			if (axisDepth < collisionDeets.depth) {
 				collisionDeets.depth = axisDepth;
 				collisionDeets.normal = axis;
+				if (isnan(collisionDeets.normal.x)) cout << "Obj2EdgeAxis is nan" << endl;
 			}
 		}
 
 		collisionDeets.depth /= collisionDeets.normal.length();
-		collisionDeets.normal = glm::normalize(collisionDeets.normal);
-		cout << collisionDeets.depth << endl;
-		cout << collisionDeets.normal.x << ", " << collisionDeets.normal.y << ", " << collisionDeets.normal.z << endl;
+		collisionDeets.depth /= 100;
+		if (collisionDeets.normal.x == 0 && collisionDeets.normal.y == 0 && collisionDeets.normal.z == 0);
+		else collisionDeets.normal = glm::normalize(collisionDeets.normal);
+		if (isnan(collisionDeets.normal.x)) cout << "Normalized Normal Nan" << endl;
+		//cout << collisionDeets.depth << endl;
+		//cout << collisionDeets.normal.x << ", " << collisionDeets.normal.y << ", " << collisionDeets.normal.z << endl;
 		if (isnan(collisionDeets.normal.x) || isnan(collisionDeets.normal.y) || isnan(collisionDeets.normal.z)) {
 			cout << "error isNan on: " << obj1->name << " and " << obj2->name << endl;
 			collisionDeets.normal = glm::vec3(0);
 		}
-		glm::vec3 intendedDir = obj2->position - obj1->position;
-		if (glm::dot(intendedDir, collisionDeets.normal) < 0.f) {
+		/*glm::vec3 intendedDir = obj2->position - obj1->position;
+		if (glm::dot(intendedDir, collisionDeets.normal) <= 0.f) {
 			collisionDeets.normal = -collisionDeets.normal;
-		}
-		//cout << "No Gap between: " << obj1->name << ", " << obj2->name << endl;
+		}*/
 		collisionDeets.overlapped = true;
 		return collisionDeets;
 }

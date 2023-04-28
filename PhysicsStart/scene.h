@@ -132,15 +132,19 @@ public:
 
     int triangleIndex = 0;
 
-    MeshData(int chunkWidth, int chunkHeight) {
-        vertices = vector<Vertex>(chunkWidth * chunkHeight);
-        triangles = vector<unsigned int>((chunkWidth - 1) * (chunkHeight - 1) * 6);
-        textureColourPlane = vector<unsigned char>(chunkWidth*chunkHeight*4);
-        CPH = chunkHeight;
-        CPW = chunkWidth;
+    MeshData(int mapWidth, int mapHeight) {
+        vertices = vector<Vertex>(mapWidth * mapHeight);
+        triangles = vector<unsigned int>((mapWidth - 1) * (mapHeight - 1) * 6);
+        textureColourPlane = vector<unsigned char>(mapWidth*mapHeight*4);
+        CPH = mapHeight;
+        CPW = mapWidth;
     }
 
     void AddTriangle(int a, int b, int c) {
+        if (triangleIndex >= triangles.size()) {
+            cout << "Index greater than vector" << endl;
+            //triangleIndex = 0;
+        }
         triangles[triangleIndex] = a;
         triangles[triangleIndex + 1] = b;
         triangles[triangleIndex + 2] = c;
@@ -154,22 +158,28 @@ public:
 
 class ProceduralScene : public Scene {
 public:
-    static const int mapWidth = 10;
-    static const int mapHeight = 10;
-    static const int chunkWidth = 1000;
-    static const int chunkHeight = 1000;
+    static const int chunkWidth = 10;
+    static const int chunkHeight = 10;
+    static const int numberOfChunks = 10;
+    static const int mapWidth = chunkWidth * numberOfChunks;
+    static const int mapHeight = chunkHeight * numberOfChunks;
+    float frequency = 20;
+    int octaves = 8;
     float scale = 0.01f;
     float heightMap[chunkWidth][chunkHeight];
     float textureMap[chunkWidth][chunkHeight];
-    int triangles[(chunkWidth - 1)*(chunkHeight - 1) * 6];
     int vertexIndex = 0;
-    float moveLeftX = (chunkWidth - 1) / -2.f;
-    float moveLeftZ = (chunkHeight - 1) / 2.f;
+    float moveLeftX = (mapWidth - 1) / -2.f;
+    float moveLeftZ = (mapHeight - 1) / 2.f;
+
+    float viewDist = 300;
     float offsetX=0, offsetY=0;
     MeshData meshData = MeshData(chunkWidth, chunkHeight);
     ProceduralScene(string name) : Scene(name) {
-        GenerateNoiseData();
+        //GenerateNoiseData();
     }
+
+
 
     void GenerateNoiseData() {
         int increment = 0;
@@ -178,14 +188,14 @@ public:
         for (int x = 0; x < chunkWidth; x++) {
             for (int y = 0; y < chunkHeight; y++) {
 
-                float sampleX = x;
-                float sampleY = y;
+                float sampleX = x + offsetX;
+                float sampleY = y + offsetY;
 
-                //Generate this point and next point, calculate angle between, if greater than 180 add to temp list to create new mesh
+                heightMap[x][y] = FractalBrownianMotion(sampleX, sampleY, octaves);//Noise
+                glm::vec3 currentPoint = glm::vec3(moveLeftX + sampleX, heightMap[x][y] * frequency, moveLeftZ - sampleY);
 
-                heightMap[x][y] = FractalBrownianMotion(sampleX + offsetX, sampleY + offsetY, 8);//Noise
                 textureMap[x][y] = heightMap[x][y];
-                meshData.vertices[vertexIndex].Position = glm::vec3(moveLeftX + x, heightMap[x][y] * 20, moveLeftZ - y);
+                meshData.vertices[vertexIndex].Position = currentPoint;
                 meshData.vertices[vertexIndex].TexCoords = glm::vec2(x / (float)chunkWidth, y / (float)chunkHeight);
 
                 //cout << heightMap[x][y] << ", ";
@@ -193,15 +203,17 @@ public:
                 float colourMapTranslate = (heightMap[x][y] + 1) / 2;
 
                 int meshDataIndex = (y * chunkWidth + x) * 4;
+                float colourShifter = 1;//Lerp(heightMap[x][y], 2, 1);
+
                 if (heightMap[x][y] >= 0.5f) {
                     meshData.textureColourPlane[meshDataIndex] = (unsigned char)0;
-                    meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)200;
+                    meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)(200 / colourShifter);
                     meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)0;
                     meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
                 }
                 else if (heightMap[x][y] >= 0.f) {
-                    meshData.textureColourPlane[meshDataIndex] = (unsigned char)150;
-                    meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)75;
+                    meshData.textureColourPlane[meshDataIndex] = (unsigned char)(150 / colourShifter);
+                    meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)(floorf(75 / colourShifter));
                     meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)0;
                     meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
                 }
@@ -209,7 +221,7 @@ public:
                     meshData.vertices[vertexIndex].Position.y = 0;
                     meshData.textureColourPlane[meshDataIndex] = (unsigned char)0;
                     meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)0;
-                    meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)Lerp(heightMap[x][y], 128, 255);
+                    meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)(floorf(Lerp(heightMap[x][y], 128, 255)) / colourShifter);
                     meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
                 }
 
@@ -225,24 +237,20 @@ public:
     }
 
     void GenerateMapGOs(Scene* scene) {
-        int chunkIndex = 0;
-        /*for (int i = 0; i < mapWidth; i++) {
-            for (int j = 0; j < mapHeight; j++) {
-                offsetX = (i * chunkWidth);
-                offsetY = (j * chunkHeight);
-                GenerateNoiseData();
-                models["generatedMeshChunk " + to_string(chunkIndex)] = new Model(Mesh(meshData.GenerateMesh()));
-                scene->sceneGOs["mapChunk " + to_string(chunkIndex)] = new GameObject(models["generatedMeshChunk " + to_string(chunkIndex)], glm::vec3(offsetX, -10.f, -offsetY), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
-                cout << "generatedMeshChunk " + to_string(chunkIndex);
-                chunkIndex++;
-            }
-        }
-        cout << endl;*/
         GenerateNoiseData();
-        models["generatedMeshChunk " + to_string(chunkIndex)] = new Model(Mesh(meshData.GenerateMesh()));
-        cout << models["generatedMeshChunk " + to_string(chunkIndex)]->meshes[0].vertices.size() << endl;
-        scene->sceneGOs["mapChunk " + to_string(chunkIndex)] = new GameObject(models["generatedMeshChunk " + to_string(chunkIndex)], glm::vec3(offsetX, -15.f, -offsetY), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
-        scene->sceneGOs["mapChunk " + to_string(chunkIndex)]->staticObj = true;
+        models["generatedMeshChunk"] = new Model(Mesh(meshData.GenerateMesh()));
+        int chunkIndex = 0;
+        for (int x = 1; x < numberOfChunks; x++) {
+            for (int y = 0; y < numberOfChunks; y++) {
+                GenerateNoiseData();
+                models["generatedMeshChunk"]->meshes.push_back(Mesh(meshData.GenerateMesh()));
+                offsetY = y * (chunkHeight - 1);
+            }
+            offsetX = x * (chunkWidth - 1);
+        }
+        cout << models["generatedMeshChunk"]->meshes.size() << endl;
+        scene->sceneGOs["mapChunk"] = new GameObject(models["generatedMeshChunk"], glm::vec3(moveLeftX, -15.f, moveLeftZ), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
+        scene->sceneGOs["mapChunk"]->staticObj = true;
 
     }
 
@@ -268,9 +276,9 @@ public:
         offsetX++;
         offsetY++;
         if (shift == 1) {
-            GenerateNoiseData();
-            delete sceneGOs["mapChunk " + to_string(0)]->model;
-            sceneGOs["mapChunk " + to_string(0)]->model = new Model(Mesh(meshData.GenerateMesh()));
+            //GenerateNoiseData();
+            //delete sceneGOs["mapChunk " + to_string(0)]->model;
+            //sceneGOs["mapChunk " + to_string(0)]->model = new Model(Mesh(meshData.GenerateMesh()));
         }
     }
 
