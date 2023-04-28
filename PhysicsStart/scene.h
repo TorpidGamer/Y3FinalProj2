@@ -181,6 +181,8 @@ public:
                 float sampleX = x;
                 float sampleY = y;
 
+                //Generate this point and next point, calculate angle between, if greater than 180 add to temp list to create new mesh
+
                 heightMap[x][y] = FractalBrownianMotion(sampleX + offsetX, sampleY + offsetY, 8);//Noise
                 textureMap[x][y] = heightMap[x][y];
                 meshData.vertices[vertexIndex].Position = glm::vec3(moveLeftX + x, heightMap[x][y] * 20, moveLeftZ - y);

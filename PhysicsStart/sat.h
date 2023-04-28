@@ -13,7 +13,7 @@ struct CollisionDetails {
 bool PointInCircle(glm::vec2 point, glm::vec2 circle, float circleRad) {
 	float distX = point.x - circle.x;
 	float distY = point.y - circle.y;
-	if (hypot(distX, distY) >= circleRad) return true;
+	if (sqrtf(distX * distX + distY * distY) >= circleRad) return true;
 	return false;
 }
 
