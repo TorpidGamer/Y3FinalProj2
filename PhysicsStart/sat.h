@@ -92,11 +92,11 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 			glm::vec3 p2 = obj1->model->meshes[meshToTest1].vertices[index+1].Position;
 			glm::vec3 p3 = obj1->model->meshes[meshToTest1].vertices[index+2].Position;
 			//Transform these to worldspace
-			cout << "Obj1p1Start: " << p1.x << ", " << p1.y << ", " << p1.z << endl;
+			//cout << "Obj1p1Start: " << p1.x << ", " << p1.y << ", " << p1.z << endl;
 			p1 *= obj1Scale;
-			cout << "Obj1p1Scale: " << p1.x << ", " << p1.y << ", " << p1.z << endl;
+			//cout << "Obj1p1Scale: " << p1.x << ", " << p1.y << ", " << p1.z << endl;
 			p1 += obj1MeshPos + obj1Pos;
-			cout << "Obj1p1Pos: " << p1.x << ", " << p1.y << ", " << p1.z << endl << endl;
+			//cout << "Obj1p1Pos: " << p1.x << ", " << p1.y << ", " << p1.z << endl << endl;
 
 			p2 *= obj1Scale;
 			p2 += obj1MeshPos + obj1Pos;
@@ -122,11 +122,11 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 			glm::vec3 p2 = obj2->model->meshes[meshToTest2].vertices[(index + 1)].Position;
 			glm::vec3 p3 = obj2->model->meshes[meshToTest2].vertices[(index + 2)].Position;
 			//Transform these to worldspace
-			cout << "Obj2p1Start: " << p1.x << ", " << p1.y << ", " << p1.z << endl;
+			//cout << "Obj2p1Start: " << p1.x << ", " << p1.y << ", " << p1.z << endl;
 			p1 *= obj2Scale;
-			cout << "Obj2p1Scale: " << p1.x << ", " << p1.y << ", " << p1.z << endl;
+			//cout << "Obj2p1Scale: " << p1.x << ", " << p1.y << ", " << p1.z << endl;
 			p1 += obj2MeshPos + obj2Pos;
-			cout << "Obj2p1Pos: " << p1.x << ", " << p1.y << ", " << p1.z << endl << endl;
+			//cout << "Obj2p1Pos: " << p1.x << ", " << p1.y << ", " << p1.z << endl << endl;
 
 			p2 *= obj2Scale;
 			p2 += obj2MeshPos + obj2Pos;
@@ -195,6 +195,7 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 
 		float minDepth = 0.0001;
 		collisionDeets.depth /= collisionDeets.normal.length();
+
 		collisionDeets.depth /= 2;
 		if (collisionDeets.depth < minDepth) collisionDeets.depth = minDepth;
 		if (collisionDeets.normal.x == 0 && collisionDeets.normal.y == 0 && collisionDeets.normal.z == 0); //cout << "Normal not Valid" << endl;

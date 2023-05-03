@@ -65,7 +65,7 @@ void GameObject::Render(Shader &complexShader) {
 			complexShader.setMat4("model", bbModelMat);
 			//boundingBox.Draw(complexShader);
 		}
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 	//Draw collision normal line
 	glm::mat4 collisionMat = glm::mat4(1.f);

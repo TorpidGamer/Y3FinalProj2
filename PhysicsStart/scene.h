@@ -244,9 +244,9 @@ public:
             for (int y = 0; y < numberOfChunks; y++) {
                 GenerateNoiseData();
                 models["generatedMeshChunk"]->meshes.push_back(Mesh(meshData.GenerateMesh()));
-                offsetY = y * (chunkHeight);
+                offsetY = y * (chunkHeight - 1);
             }
-            offsetX = x * (chunkWidth);
+            offsetX = x * (chunkWidth - 1);
         }
         cout << models["generatedMeshChunk"]->meshes.size() << endl;
         scene->sceneGOs["mapChunk"] = new GameObject(models["generatedMeshChunk"], glm::vec3(moveLeftX, -15.f, moveLeftZ), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
