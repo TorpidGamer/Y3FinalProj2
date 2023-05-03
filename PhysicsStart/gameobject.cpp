@@ -65,14 +65,14 @@ void GameObject::Render(Shader &complexShader) {
 			complexShader.setMat4("model", bbModelMat);
 			//boundingBox.Draw(complexShader);
 		}
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 	//Draw collision normal line
 	glm::mat4 collisionMat = glm::mat4(1.f);
 	collisionMat = glm::translate(collisionMat, collisionNormalLine);
 	complexShader.setMat4("model", collisionMat);
 	if (!collisionLineMesh.vertices.size() == 0 && resolveCollisions) {
-		collisionLineMesh.Draw(complexShader);
+		//collisionLineMesh.Draw(complexShader);
 	}
 
 }
@@ -97,11 +97,13 @@ void GameObject::CountVertices() {
 
 //For loop to find the minimum and maximum of the vertices, use imbetween for sides
 void GameObject::LoopVertices() {
-	meshSize = model == nullptr ? 8 : model->meshes[0].vertices.size();
 	if (staticModel == glm::mat4(0.f)) {
 		staticModel = CalculateMatrix();
 	}
 	float top, bottom, left, right, front, back;
+	if (bbWidth == 0) bbWidth = 1;
+	if (bbHeight == 0) bbHeight = 1;
+	if (bbDepth == 0) bbDepth = 1;
 	right = (bbWidth / 2);
 	left = -(bbWidth / 2);
 	top = (bbHeight / 2);

@@ -91,10 +91,10 @@ public:
         models["maxwell"] = model;
         models["car"] = car;       
         testScene->playerStartPos = glm::vec3(1.f, 2.f, 1.f);
-        GameObject* goal = new GameObject(models["cubeMesh"], glm::vec3(0, 0.f, 10), glm::vec3(0), glm::vec3(1), glm::vec3(0), "Test");
+        GameObject* goal = new GameObject(models["cubeMesh"], glm::vec3(0, 0.f, 10), glm::vec3(0), glm::vec3(1.f), glm::vec3(0), "Test");
         GameObject* floor = new GameObject(models["cubeMesh"], glm::vec3(0.f, -10.f, 0.f), glm::vec3(0.f), glm::vec3(30.f, 2.f, 30.f), glm::vec3(0), "floor");
         //GameObject* maxwell = new GameObject(models["maxwell"], glm::vec3(0.f, 0.f, 5.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(.33f), glm::vec3(0), "maxwell");
-        GameObject* carGO = new GameObject(models["car"], glm::vec3(10.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f), glm::vec3(0), "car");
+        //GameObject* carGO = new GameObject(models["car"], glm::vec3(10.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f), glm::vec3(0), "car");
         /*GameObject* window1 = new GameObject(models["quadMesh"], glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "window1");
         GameObject* window2 = new GameObject(models["quadMesh"], glm::vec3(2.f, 0.f, -4.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "window2");
         GameObject* window3 = new GameObject(models["quadMesh"], glm::vec3(1.f, 0.f, -6.f), glm::vec3(0.f, 90.f, 0.f), glm::vec3(1.f), glm::vec3(0), "window3");
@@ -107,6 +107,7 @@ public:
         //maxwell->transparent = true;
 
         floor->staticObj = true;
+        goal->staticObj = true;
         //maxwell->staticObj = true;
 
         /*testScene->sceneGOs["window1"] = window1;
@@ -116,7 +117,7 @@ public:
 
         testScene->sceneGOs["goal"] = goal;
         //testScene->sceneGOs["maxwell"] = maxwell;
-        testScene->sceneGOs["car"] = carGO;
+        //testScene->sceneGOs["car"] = carGO;
         testScene->sceneGOs["floor"] = floor;
 
         return testScene;
@@ -160,7 +161,7 @@ class ProceduralScene : public Scene {
 public:
     static const int chunkWidth = 10;
     static const int chunkHeight = 10;
-    static const int numberOfChunks = 10;
+    static const int numberOfChunks = 16;
     static const int mapWidth = chunkWidth * numberOfChunks;
     static const int mapHeight = chunkHeight * numberOfChunks;
     float frequency = 20;
@@ -233,20 +234,19 @@ public:
                 vertexIndex++;
             }
         }
-        cout << endl;
     }
 
     void GenerateMapGOs(Scene* scene) {
         GenerateNoiseData();
         models["generatedMeshChunk"] = new Model(Mesh(meshData.GenerateMesh()));
         int chunkIndex = 0;
-        for (int x = 1; x < numberOfChunks; x++) {
+        for (int x = 0; x < numberOfChunks; x++) {
             for (int y = 0; y < numberOfChunks; y++) {
                 GenerateNoiseData();
                 models["generatedMeshChunk"]->meshes.push_back(Mesh(meshData.GenerateMesh()));
-                offsetY = y * (chunkHeight - 1);
+                offsetY = y * (chunkHeight);
             }
-            offsetX = x * (chunkWidth - 1);
+            offsetX = x * (chunkWidth);
         }
         cout << models["generatedMeshChunk"]->meshes.size() << endl;
         scene->sceneGOs["mapChunk"] = new GameObject(models["generatedMeshChunk"], glm::vec3(moveLeftX, -15.f, moveLeftZ), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");

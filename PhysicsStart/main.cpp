@@ -262,17 +262,13 @@ void CheckCollisions() {
     for (auto it = currentScene->sceneGOs.begin(); it != currentScene->sceneGOs.end(); it++) {
         for (auto jit = currentScene->sceneGOs.begin(); jit != currentScene->sceneGOs.end(); jit++) {
             it->second->Collisions(jit->second, deltaTime);
-            //CollisionDetails collision = IsOverlapped(it->second, jit->second);
-            if (it->second != jit->second) {
-                if (it->second->resolveCollisions && jit->second->resolveCollisions) {
-                    //cout << "objects: " << it->second->name << " and " << jit->second->name << "need resolving" << endl;
-                    CollisionDetails collision = IsOverlapped(it->second, jit->second);
-                    if (collision.overlapped) {
-                        if ((!it->second->isTrigger && !jit->second->isTrigger)) {
-                            //collision.normal.y = 0;
-                            if (!it->second->staticObj) it->second->velocity += -collision.normal * collision.depth / 2.f;
-                            if (!jit->second->staticObj) jit->second->velocity += collision.normal * collision.depth / 2.f;
-                        }
+            jit->second->Collisions(it->second, deltaTime);
+            if (it->second->resolveCollisions && jit->second->resolveCollisions) {
+                CollisionDetails collision = IsOverlapped(it->second, jit->second);
+                if (collision.overlapped) {
+                    if ((!it->second->isTrigger && !jit->second->isTrigger)) {
+                        if (!it->second->staticObj) it->second->velocity += -collision.normal * collision.depth;
+                        if (!jit->second->staticObj) jit->second->velocity += collision.normal * collision.depth;
                     }
                 }
             }
