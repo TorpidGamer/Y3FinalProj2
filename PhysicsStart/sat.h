@@ -44,7 +44,7 @@ CollisionDetails CalculateDetails(glm::vec3 axis, glm::vec2 projection1, glm::ve
 	return *currentDetails;
 }
 
-CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
+CollisionDetails IsOverlapped(GameObject* objects[2]) {
 	//second point - first point = edge
 	
 	CollisionDetails collisionDeets;
@@ -53,142 +53,86 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 	collisionDeets.normal = glm::vec3(0);
 	collisionDeets.overlapped = true;
 
-	vector<glm::vec3> normalsToTest1, normalsToTest2;
-	vector<glm::vec3> obj1Edges, obj2Edges;
+	vector<glm::vec3> normalsToTest[2];
+	vector<glm::vec3> objectEdges[2];
 
-	glm::vec3 obj1NextPos = obj1->position, obj2NextPos = obj2->position;
-	glm::vec3 obj1Scale = obj1->scale, obj2Scale = obj2->scale;
+	glm::vec3 objectScale[2] = {objects[0]->scale, objects[1]->scale};
 
-	glm::vec3 obj1Pos = obj1->position, obj2Pos = obj2->position;
-	// create circle that can then compare to point we're testing to see if within range
-	glm::vec2 circlePos1 = glm::vec2(obj1->position.x, obj1->position.z), circlePos2 = glm::vec2(obj2->position.x, obj2->position.z);
-	float circleRadius = 5;
-	int meshToTest1 = 0, meshToTest2 = 0;
-	float obj1ClosestMesh = glm::distance(obj1->model->meshes[0].meshSpaceCenter + obj1Pos, obj2->position), obj2ClosestMesh = glm::distance(obj2->model->meshes[0].meshSpaceCenter + obj2Pos, obj1->position);
-	for (int i = 1; i < obj1->model->meshes.size(); i++) {
-		float dist = glm::distance(obj1->model->meshes[i].meshSpaceCenter + obj1Pos, obj2->position);
-		if (dist < obj1ClosestMesh) {
-			obj1ClosestMesh = dist;
-			meshToTest1 = i;
+	glm::vec3 objectPos[2] = {objects[0]->position, objects[1]->position};
+	int objectMeshToTest[2] = {0};
+	float objectClosestMeshDist[2]{ glm::distance(objects[0]->model->meshes[0].meshSpaceCenter + objectPos[0], objectPos[1]),
+		glm::distance(objects[1]->model->meshes[0].meshSpaceCenter + objectPos[1], objectPos[0]) };
+
+	for (int o = 0; o < 1; o++) {
+		for (int i = 1; i < objects[o]->model->meshes.size(); i++) {
+			int otherObj = o == 1 ? 0 : 1;
+			float dist = glm::distance(objects[o]->model->meshes[i].meshSpaceCenter + objectPos[o], objectPos[otherObj]);
+			if (dist < objectClosestMeshDist[o]) {
+				objectClosestMeshDist[o] = dist;
+				objectMeshToTest[o] = i;
+			}
 		}
 	}
-	for (int i = 1; i < obj2->model->meshes.size(); i++) {
-		float dist = glm::distance(obj2->model->meshes[i].meshSpaceCenter + obj2Pos, obj1->position);
-		if (dist < obj2ClosestMesh) {
-			obj2ClosestMesh = dist;
-			meshToTest2 = i;
-		}
-	}
-	glm::vec3 obj1MeshPos = obj1->model->meshes[meshToTest1].meshSpaceCenter;
-	glm::vec3 obj2MeshPos = obj2->model->meshes[meshToTest2].meshSpaceCenter;
+	glm::vec3 objectMeshPosition[2] = { objects[0]->model->meshes[objectMeshToTest[0]].meshSpaceCenter, objects[1]->model->meshes[objectMeshToTest[1]].meshSpaceCenter };
 	//cout << "Testing obj1: " << obj1->name << ", mesh no. " << meshToTest1 << endl;
 	//cout << "Testing obj2: " << obj2->name << ", mesh no. " << meshToTest2 << endl;
 
-		//create normals and edges
+		//create normals and edges to test along
+		for (int o = 0; o < 2; o++) {
+			for (unsigned int i = 0; i < objects[o]->model->meshes[objectMeshToTest[o]].vertices.size(); i += 3) {
+				unsigned int index = objects[o]->model->meshes[objectMeshToTest[o]].indices[i];
+				glm::vec3 p1 = objects[o]->model->meshes[objectMeshToTest[o]].vertices[index].Position;
+				glm::vec3 p2 = objects[o]->model->meshes[objectMeshToTest[o]].vertices[index + 1].Position;
+				glm::vec3 p3 = objects[o]->model->meshes[objectMeshToTest[o]].vertices[index + 2].Position;
+				//Transform these to worldspace
+				p1 = glm::vec4(p1, 1) * objects[o]->modelMatrix;
+				//p1 += objects[o]->model->meshes[objectMeshToTest[o]].meshSpaceCenter;
 
-		for (unsigned int i = 0; i < obj1->model->meshes[meshToTest1].vertices.size(); i += 3) {
-			unsigned int index = obj1->model->meshes[meshToTest1].indices[i];
-			glm::vec3 p1 = obj1->model->meshes[meshToTest1].vertices[index].Position;
-			glm::vec3 p2 = obj1->model->meshes[meshToTest1].vertices[index+1].Position;
-			glm::vec3 p3 = obj1->model->meshes[meshToTest1].vertices[index+2].Position;
-			//Transform these to worldspace
-			//cout << "Obj1p1Start: " << p1.x << ", " << p1.y << ", " << p1.z << endl;
-			p1 *= obj1Scale;
-			//cout << "Obj1p1Scale: " << p1.x << ", " << p1.y << ", " << p1.z << endl;
-			p1 += obj1MeshPos + obj1Pos;
-			//cout << "Obj1p1Pos: " << p1.x << ", " << p1.y << ", " << p1.z << endl << endl;
+				p2 = glm::vec4(p2, 1) * objects[o]->modelMatrix;
+				//p2 += objects[o]->model->meshes[objectMeshToTest[o]].meshSpaceCenter;
 
-			p2 *= obj1Scale;
-			p2 += obj1MeshPos + obj1Pos;
-
-			p3 *= obj1Scale;
-			p3 += obj1MeshPos + obj1Pos;
+				p3 = glm::vec4(p3, 1) * objects[o]->modelMatrix;
+				//p3 += objects[o]->model->meshes[objectMeshToTest[o]].meshSpaceCenter;
 
 
-			glm::vec3 u = p2 - p1;
-			glm::vec3 v = p3 - p1;
+				glm::vec3 u = p2 - p1;
+				glm::vec3 v = p3 - p1;
 
-			glm::vec3 normal = glm::vec3((u.y * v.z) - (u.z * v.y),
-				(u.z * v.x) - (u.x * v.z),
-				(u.x * v.y) - (u.y * v.x));
+				glm::vec3 normal = glm::vec3((u.y * v.z) - (u.z * v.y),
+					(u.z * v.x) - (u.x * v.z),
+					(u.x * v.y) - (u.y * v.x));
 
-			normalsToTest1.push_back(normal);
-			obj1Edges.push_back(u);
-			obj1Edges.push_back(v);
-		}
-		for (unsigned int i = 0; i < obj2->model->meshes[meshToTest2].vertices.size() - 3; i += 3) {
-			unsigned int index = obj2->model->meshes[meshToTest2].indices[i];
-			glm::vec3 p1 = obj2->model->meshes[meshToTest2].vertices[index].Position;
-			glm::vec3 p2 = obj2->model->meshes[meshToTest2].vertices[(index + 1)].Position;
-			glm::vec3 p3 = obj2->model->meshes[meshToTest2].vertices[(index + 2)].Position;
-			//Transform these to worldspace
-			//cout << "Obj2p1Start: " << p1.x << ", " << p1.y << ", " << p1.z << endl;
-			p1 *= obj2Scale;
-			//cout << "Obj2p1Scale: " << p1.x << ", " << p1.y << ", " << p1.z << endl;
-			p1 += obj2MeshPos + obj2Pos;
-			//cout << "Obj2p1Pos: " << p1.x << ", " << p1.y << ", " << p1.z << endl << endl;
-
-			p2 *= obj2Scale;
-			p2 += obj2MeshPos + obj2Pos;
-
-			p3 *= obj2Scale;
-			p3 += obj2MeshPos + obj2Pos;
-
-			glm::vec3 u = p2 - p1;
-			glm::vec3 v = p3 - p1;
-
-			glm::vec3 normal = glm::vec3((u.y * v.z) - (u.z * v.y),
-				(u.z * v.x) - (u.x * v.z),
-				(u.x * v.y) - (u.y * v.x));
-			normalsToTest2.push_back(normal);
-			obj2Edges.push_back(u);
-			obj2Edges.push_back(v);
-		}
-
-		//Test normals
-		for (int i = 0; i < normalsToTest1.size(); i++) {
-			glm::vec2 project1, project2;
-			project1 = ProjectVertices(obj1, normalsToTest1[i]);
-			project2 = ProjectVertices(obj2, normalsToTest1[i]);
-
-			collisionDeets = CalculateDetails(normalsToTest1[i], project1, project2, &collisionDeets, "normals1");
-		}
-
-		for (int i = 0; i < normalsToTest2.size(); i++) {
-			glm::vec2 project1, project2;
-			project1 = ProjectVertices(obj1, normalsToTest2[i]);
-			project2 = ProjectVertices(obj2, normalsToTest2[i]);
-
-			collisionDeets = CalculateDetails(normalsToTest2[i], project1, project2, &collisionDeets, "normals2");
-		}
-
-		//Test edges
-		for (int i = 0; i < obj1Edges.size(); i++) {
-			if (obj2Edges.size() == 0) {
-				cout << "No edges on Obj2" << endl;
-				break;
+				normalsToTest[o].push_back(normal);
+				objectEdges[o].push_back(u);
+				objectEdges[o].push_back(v);
 			}
-			glm::vec3 axis = glm::cross(obj1Edges[i], obj2Edges[i % obj2Edges.size()]);
-
-			glm::vec2 project1, project2;
-			project1 = ProjectVertices(obj1, axis);
-			project2 = ProjectVertices(obj2, axis);
-
-			collisionDeets = CalculateDetails(axis, project1, project2, &collisionDeets, "edges1");
 		}
+			
+		for (int o = 0; o < 2; o++) {
+			int otherObj = o == 1 ? 0 : 1;
+			//Test normals
+			for (int i = 0; i < normalsToTest[o].size(); i++) {
+				glm::vec2 project1, project2;
+				project1 = ProjectVertices(objects[o], normalsToTest[o][i]);
+				project2 = ProjectVertices(objects[otherObj], normalsToTest[o][i]);
 
-		for (int i = 0; i < obj2Edges.size(); i++) {
-			if (obj1Edges.size() == 0) {
-				cout << "No edges on Obj1" << endl;
-				break;
+				collisionDeets = CalculateDetails(normalsToTest[o][i], project1, project2, &collisionDeets, "normals " + to_string(o));
 			}
-			glm::vec3 axis = glm::cross(obj2Edges[i], obj1Edges[i % obj1Edges.size()]);
 
-			glm::vec2 project1, project2;
-			project1 = ProjectVertices(obj1, axis);
-			project2 = ProjectVertices(obj2, axis);
+			//Test edges
+			for (int i = 0; i < objectEdges[o].size(); i++) {
+				if (objectEdges[o].size() == 0) {
+					cout << "No edges on Obj2" << endl;
+					break;
+				}
+				glm::vec3 axis = glm::cross(objectEdges[o][i], objectEdges[otherObj][i % objectEdges[otherObj].size()]);
 
-			collisionDeets = CalculateDetails(axis, project1, project2, &collisionDeets, "edges2");
+				glm::vec2 project1, project2;
+				project1 = ProjectVertices(objects[o], axis);
+				project2 = ProjectVertices(objects[otherObj], axis);
+
+				collisionDeets = CalculateDetails(axis, project1, project2, &collisionDeets, "edges " + to_string(o));
+			}
 		}
 
 		//If we reached this point the objects overlap so return details
@@ -203,7 +147,7 @@ CollisionDetails IsOverlapped(GameObject* obj1, GameObject* obj2) {
 		if (isnan(collisionDeets.normal.x)) cout << "Normalized Normal Nan" << endl;
 		//cout << "Overlap" << endl;
 		//cout << collisionDeets.depth << endl;
-		glm::vec3 intendedDir = obj2->position - obj1->position;
+		glm::vec3 intendedDir = objects[1]->position - objects[0]->position;
 		if (glm::dot(intendedDir, collisionDeets.normal) <= 0.f) {
 			collisionDeets.normal = -collisionDeets.normal;
 		}

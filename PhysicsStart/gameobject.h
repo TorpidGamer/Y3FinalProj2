@@ -32,7 +32,7 @@ public:
 	bool hasPrimitive;
 	int drawBBs = 1;
 
-	glm::mat4 staticModel = glm::mat4(0.f);
+	glm::mat4 modelMatrix = glm::mat4(0.f);
 
 	float bbWidth = 0.25f, bbHeight = 0.25f, bbDepth = 0.25f;
 	glm::vec3 RTF, LBB;

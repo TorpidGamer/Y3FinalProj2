@@ -34,11 +34,12 @@ void GameObject::Initialise(glm::vec3 position = glm::vec3(0.f),
 
 void GameObject::Render(Shader &complexShader) {	
 	if (staticObj) {
-		complexShader.setMat4("model", staticModel);
+		complexShader.setMat4("model", modelMatrix);
 		model->Draw(complexShader);
 	}
 	else {
-		complexShader.setMat4("model", CalculateMatrix());
+		modelMatrix = CalculateMatrix();
+		complexShader.setMat4("model", modelMatrix);
 		model->Draw(complexShader);
 	}
 
@@ -97,8 +98,8 @@ void GameObject::CountVertices() {
 
 //For loop to find the minimum and maximum of the vertices, use imbetween for sides
 void GameObject::LoopVertices() {
-	if (staticModel == glm::mat4(0.f)) {
-		staticModel = CalculateMatrix();
+	if (modelMatrix == glm::mat4(0.f)) {
+		modelMatrix = CalculateMatrix();
 	}
 	float top, bottom, left, right, front, back;
 	if (bbWidth == 0) bbWidth = 1;
@@ -277,49 +278,7 @@ void GameObject::Collisions(GameObject* other, float deltaTime) {
 		//gravity = true;
 	}
 }
-void GameObject::HandleCollision(int side, GameObject* other) {
-	/*CollisionDetails cI = IsOverlapped(this, other);
-	if (cI.overlapped) {
-		/*collisionNormalLine = cI.normal + position;
-		cout << cI.normal.x << ", " << cI.normal.y << ", " << cI.normal.z << ". At depth: " << cI.depth << endl;
-		vector<Vertex> lineVerts;
-		vector<unsigned int> lineIndices;
-		float BLOffset = 0.5f;
-		lineVerts.push_back(Vertex(glm::vec3(position.x - BLOffset, position.y - BLOffset, position.z), glm::vec2(0), glm::vec3(0)));
-		lineVerts.push_back(Vertex(glm::vec3(position.x - BLOffset, position.y, position.z), glm::vec2(0), glm::vec3(0)));
-		lineVerts.push_back(Vertex(glm::vec3(position.x, position.y, position.z), glm::vec2(1), glm::vec3(0)));
-		lineVerts.push_back(Vertex(glm::vec3(position.x, position.y - BLOffset, position.z), glm::vec2(1), glm::vec3(0)));
-
-		lineVerts.push_back(Vertex(glm::vec3(cI.normal.x - BLOffset, cI.normal.y - BLOffset, cI.normal.z), glm::vec2(0), glm::vec3(0)));
-		lineVerts.push_back(Vertex(glm::vec3(cI.normal.x - BLOffset, cI.normal.y, cI.normal.z), glm::vec2(0), glm::vec3(0)));
-		lineVerts.push_back(Vertex(glm::vec3(cI.normal.x, cI.normal.y, cI.normal.z), glm::vec2(1), glm::vec3(0)));
-		lineVerts.push_back(Vertex(glm::vec3(cI.normal.x, cI.normal.y - BLOffset, cI.normal.z), glm::vec2(1), glm::vec3(0)));
-
-		lineIndices =
-		{ 
-			0, 1, 4,
-			0, 5, 4,
-
-			3, 7, 2,
-			3, 7, 6,
-
-			5, 6, 4,
-			5, 6, 7,
-
-			0, 1, 2,
-			0, 2, 3,
-
-			1, 5, 6,
-			1, 6, 2,
-
-			0, 4, 7,
-			0, 7, 3
-		};
-		collisionLineMesh = Mesh(lineVerts, lineIndices);
-		this->velocity = cI.normal * cI.depth / 2.f;
-		if (!other->staticObj) other->velocity = -cI.normal * cI.depth / 2.f;
-	}*/
-}
+void GameObject::HandleCollision(int side, GameObject* other) {}
 
 void GameObject::OnOverlap(GameObject* other) { }
 

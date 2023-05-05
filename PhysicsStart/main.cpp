@@ -264,7 +264,8 @@ void CheckCollisions() {
             it->second->Collisions(jit->second, deltaTime);
             jit->second->Collisions(it->second, deltaTime);
             if (it->second->resolveCollisions && jit->second->resolveCollisions) {
-                CollisionDetails collision = IsOverlapped(it->second, jit->second);
+                GameObject* GOs[2] = { it->second, jit->second };
+                CollisionDetails collision = IsOverlapped(GOs);
                 if (collision.overlapped) {
                     if ((!it->second->isTrigger && !jit->second->isTrigger)) {
                         if (!it->second->staticObj) it->second->velocity += -collision.normal * collision.depth;
