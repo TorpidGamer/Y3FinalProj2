@@ -27,6 +27,7 @@ public:
 	bool wasGrav = true;
 	bool isBottom = false;
 	bool isTrigger = false;
+	bool render = true;
 	float gravityForce = -1.f;
 	unsigned int VAO;
 	bool hasPrimitive;

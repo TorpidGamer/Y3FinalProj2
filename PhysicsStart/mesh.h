@@ -77,6 +77,8 @@ struct Texture {
 class Mesh {
 public:
 	vector<Vertex> vertices;
+	vector<glm::vec3>edges;
+	vector<glm::vec3>normals;
 	glm::vec3 meshSpaceCenter = glm::vec3(0);
 	vector<unsigned int> indices;
 	vector<Texture> textures;
@@ -137,10 +139,17 @@ public:
 			vertices[vertexIndexA].Normal = triangleNormal;
 			vertices[vertexIndexB].Normal = triangleNormal;
 			vertices[vertexIndexC].Normal = triangleNormal;
+			normals.push_back(triangleNormal);
 		}
 		//for (int i = 0; i < vertices.size(); i++) {
 		//	normalize(vertices[i].Normal);
 		//}
+	}
+
+	void CreateEdges() {
+		for (int i = 0; i < vertices.size(); i+=2) {
+			edges.push_back(vertices[(i + 1) % vertices.size()].Position - vertices[i].Position);
+		}
 	}
 
 	glm::vec3 SurfaceNormalsFromIndices(int indexA, int indexB, int indexC) {
@@ -248,6 +257,7 @@ private:
 		meshSpaceCenter /= vertices.size();
 
 		CalculateNormals();
+		CreateEdges();
 
 		glGenVertexArrays(1, &VAO);
 		glGenBuffers(1, &VBO);

@@ -2,7 +2,7 @@
 
 #include "gameobject.h"
 
-glm::vec2 ProjectVertices(GameObject* verticesToProject, glm::vec3 axis);
+glm::vec2 ProjectVertices(GameObject* verticesToProject, glm::vec3 axis, int meshToTest);
 
 struct CollisionDetails {
 	bool overlapped;
@@ -53,9 +53,6 @@ CollisionDetails IsOverlapped(GameObject* objects[2]) {
 	collisionDeets.normal = glm::vec3(0);
 	collisionDeets.overlapped = true;
 
-	vector<glm::vec3> normalsToTest[2];
-	vector<glm::vec3> objectEdges[2];
-
 	glm::vec3 objectScale[2] = {objects[0]->scale, objects[1]->scale};
 
 	glm::vec3 objectPos[2] = {objects[0]->position, objects[1]->position};
@@ -74,27 +71,21 @@ CollisionDetails IsOverlapped(GameObject* objects[2]) {
 		}
 	}
 	glm::vec3 objectMeshPosition[2] = { objects[0]->model->meshes[objectMeshToTest[0]].meshSpaceCenter, objects[1]->model->meshes[objectMeshToTest[1]].meshSpaceCenter };
+	vector<glm::vec3> normalsToTest[2] = { objects[0]->model->meshes[objectMeshToTest[0]].normals, objects[1]->model->meshes[objectMeshToTest[1]].normals };
+	vector<glm::vec3> objectEdges[2] = { objects[0]->model->meshes[objectMeshToTest[0]].edges, objects[1]->model->meshes[objectMeshToTest[1]].edges };
 	//cout << "Testing obj1: " << obj1->name << ", mesh no. " << meshToTest1 << endl;
 	//cout << "Testing obj2: " << obj2->name << ", mesh no. " << meshToTest2 << endl;
 
 		//create normals and edges to test along
-		for (int o = 0; o < 2; o++) {
+		/*for (int o = 0; o < 2; o++) {
 			for (unsigned int i = 0; i < objects[o]->model->meshes[objectMeshToTest[o]].vertices.size(); i += 3) {
 				unsigned int index = objects[o]->model->meshes[objectMeshToTest[o]].indices[i];
 				glm::vec3 p1 = objects[o]->model->meshes[objectMeshToTest[o]].vertices[index].Position;
 				glm::vec3 p2 = objects[o]->model->meshes[objectMeshToTest[o]].vertices[index + 1].Position;
 				glm::vec3 p3 = objects[o]->model->meshes[objectMeshToTest[o]].vertices[index + 2].Position;
 				//Transform these to worldspace
-				p1 = glm::vec4(p1, 1) * objects[o]->modelMatrix;
-				//p1 += objects[o]->model->meshes[objectMeshToTest[o]].meshSpaceCenter;
-
-				p2 = glm::vec4(p2, 1) * objects[o]->modelMatrix;
-				//p2 += objects[o]->model->meshes[objectMeshToTest[o]].meshSpaceCenter;
-
-				p3 = glm::vec4(p3, 1) * objects[o]->modelMatrix;
 				//p3 += objects[o]->model->meshes[objectMeshToTest[o]].meshSpaceCenter;
-
-
+				
 				glm::vec3 u = p2 - p1;
 				glm::vec3 v = p3 - p1;
 
@@ -106,30 +97,33 @@ CollisionDetails IsOverlapped(GameObject* objects[2]) {
 				objectEdges[o].push_back(u);
 				objectEdges[o].push_back(v);
 			}
-		}
+		}*/
 			
 		for (int o = 0; o < 2; o++) {
 			int otherObj = o == 1 ? 0 : 1;
 			//Test normals
 			for (int i = 0; i < normalsToTest[o].size(); i++) {
 				glm::vec2 project1, project2;
-				project1 = ProjectVertices(objects[o], normalsToTest[o][i]);
-				project2 = ProjectVertices(objects[otherObj], normalsToTest[o][i]);
+				glm::vec3 axis = (normalsToTest[o][i]); //* -objects[o]->scale));// + objects[o]->position);
+				project1 = ProjectVertices(objects[o], axis, objectMeshToTest[o]);
+				project2 = ProjectVertices(objects[otherObj], axis, objectMeshToTest[otherObj]);
 
-				collisionDeets = CalculateDetails(normalsToTest[o][i], project1, project2, &collisionDeets, "normals " + to_string(o));
+				collisionDeets = CalculateDetails(axis, project1, project2, &collisionDeets, "normals " + to_string(o));
 			}
 
 			//Test edges
 			for (int i = 0; i < objectEdges[o].size(); i++) {
-				if (objectEdges[o].size() == 0) {
-					cout << "No edges on Obj2" << endl;
+				if (objectEdges[otherObj].size() == 0) {
+					cout << "No edges on Obj" << otherObj+1 << endl;
 					break;
 				}
-				glm::vec3 axis = glm::cross(objectEdges[o][i], objectEdges[otherObj][i % objectEdges[otherObj].size()]);
+				glm::vec3 axis1 = (objectEdges[o][i]); //* -objects[o]->scale); //+ objects[o]->position;
+				glm::vec3 axis2 = (objectEdges[otherObj][i % objectEdges[otherObj].size()]); //* -objects[otherObj]->scale);// + objects[otherObj]->position;
+				glm::vec3 axis = glm::cross(axis1, axis2);
 
 				glm::vec2 project1, project2;
-				project1 = ProjectVertices(objects[o], axis);
-				project2 = ProjectVertices(objects[otherObj], axis);
+				project1 = ProjectVertices(objects[o], axis, objectMeshToTest[o]);
+				project2 = ProjectVertices(objects[otherObj], axis, objectMeshToTest[otherObj]);
 
 				collisionDeets = CalculateDetails(axis, project1, project2, &collisionDeets, "edges " + to_string(o));
 			}
@@ -159,11 +153,11 @@ CollisionDetails IsOverlapped(GameObject* objects[2]) {
 //glm::vec3 GetAxis(glm::vec3 pointA, glm::vec3 pointB) {}
 
 //x = min, y = max
-glm::vec2 ProjectVertices(GameObject* verticesToProject, glm::vec3 axis) {
+glm::vec2 ProjectVertices(GameObject* verticesToProject, glm::vec3 axis, int meshToTest) {
 	float min = 999;
 	float max = -999;
-	for (int i = 0; i < verticesToProject->model->meshes[0].vertices.size(); i++) {
-		glm::vec3 currentVert = (verticesToProject->model->meshes[0].vertices[i].Position * verticesToProject->scale) + verticesToProject->position + verticesToProject->velocity;
+	for (int i = 0; i < verticesToProject->model->meshes[meshToTest].vertices.size(); i++) {
+		glm::vec3 currentVert = (verticesToProject->model->meshes[meshToTest].vertices[i].Position * verticesToProject->scale) + verticesToProject->position;
 		if (isnan(currentVert.x) || isnan(currentVert.y) || isnan(currentVert.z)) {
 			cout << "error isNan on: " << verticesToProject->name << endl;
 			currentVert = glm::vec3(0);

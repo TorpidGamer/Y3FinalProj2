@@ -92,7 +92,7 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    // set rand seed
+    // set random seed
     srand(time(0));
     // set opengl states
     glEnable(GL_DEPTH_TEST);
@@ -403,6 +403,13 @@ void ProcessInputs(GLFWwindow* window) {
         cout << "F Released" << endl;
         currentScene->PassDataToScene(1);
         fPressed = false;
+    }
+    
+    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
+        camera.playerChar->gravity = false;
+    }
+    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+        camera.playerChar->gravity = true;
     }
 
     if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {

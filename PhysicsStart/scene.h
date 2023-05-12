@@ -92,7 +92,7 @@ public:
         models["car"] = car;       
         testScene->playerStartPos = glm::vec3(1.f, 2.f, 1.f);
         GameObject* goal = new GameObject(models["cubeMesh"], glm::vec3(0, 0.f, 10), glm::vec3(0), glm::vec3(1.f), glm::vec3(0), "Test");
-        GameObject* floor = new GameObject(models["cubeMesh"], glm::vec3(0.f, -10.f, 0.f), glm::vec3(0.f), glm::vec3(30.f, 2.f, 30.f), glm::vec3(0), "floor");
+        GameObject* floor = new GameObject(models["cubeMesh"], glm::vec3(0.f, -10.f, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(30.f, 2.f, 30.f), glm::vec3(0), "floor");
         //GameObject* maxwell = new GameObject(models["maxwell"], glm::vec3(0.f, 0.f, 5.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(.33f), glm::vec3(0), "maxwell");
         //GameObject* carGO = new GameObject(models["car"], glm::vec3(10.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f), glm::vec3(0), "car");
         /*GameObject* window1 = new GameObject(models["quadMesh"], glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "window1");
@@ -133,10 +133,10 @@ public:
 
     int triangleIndex = 0;
 
-    MeshData(int mapWidth, int mapHeight) {
-        vertices = vector<Vertex>(mapWidth * mapHeight);
-        triangles = vector<unsigned int>((mapWidth - 1) * (mapHeight - 1) * 6);
-        textureColourPlane = vector<unsigned char>(mapWidth*mapHeight*4);
+    MeshData(int mapWidth, int mapHeight, int meshSimplification) {
+        vertices = vector<Vertex>((mapWidth * mapHeight) / meshSimplification);
+        triangles = vector<unsigned int>(((mapWidth - 1) * (mapHeight - 1) * 6) / meshSimplification);
+        textureColourPlane = vector<unsigned char>((mapWidth * mapHeight * 4) / meshSimplification);
         CPH = mapHeight;
         CPW = mapWidth;
     }
@@ -175,22 +175,27 @@ public:
 
     float viewDist = 300;
     float offsetX=0, offsetY=0;
-    MeshData meshData = MeshData(chunkWidth, chunkHeight);
+    float rngOffsetX = 0, rngOffsetY = 0;
+    int numChunksInRange = viewDist / chunkWidth - 1;
+    vector<MeshData> meshDatas;
+    map<glm::vec2, GameObject> chunkMap;
     ProceduralScene(string name) : Scene(name) {
         //GenerateNoiseData();
     }
 
 
 
-    void GenerateNoiseData() {
-        int increment = 0;
+    MeshData GenerateNoiseData(int levelOfDetail) {
         vertexIndex = 0;
-        meshData.triangleIndex = 0;
-        for (int x = 0; x < chunkWidth; x++) {
-            for (int y = 0; y < chunkHeight; y++) {
+        int currentMeshData = meshDatas.size();
+        int meshSimplification = (levelOfDetail == 0) ? 1 : levelOfDetail;
+        int verticesPerLine = (chunkWidth - 1) / meshSimplification + 1;
+        MeshData meshData = MeshData(chunkWidth, chunkHeight, meshSimplification);
+        for (int x = 0; x < chunkWidth; x+= meshSimplification) {
+            for (int y = 0; y < chunkHeight; y+= meshSimplification) {
 
-                float sampleX = x + offsetX;
-                float sampleY = y + offsetY;
+                float sampleX = x + offsetX + rngOffsetX;
+                float sampleY = y + offsetY + rngOffsetY;
 
                 heightMap[x][y] = FractalBrownianMotion(sampleX, sampleY, octaves);//Noise
                 glm::vec3 currentPoint = glm::vec3(moveLeftX + sampleX, heightMap[x][y] * frequency, moveLeftZ - sampleY);
@@ -203,62 +208,99 @@ public:
 
                 float colourMapTranslate = (heightMap[x][y] + 1) / 2;
 
-                int meshDataIndex = (y * chunkWidth + x) * 4;
-                float colourShifter = 1;//Lerp(heightMap[x][y], 2, 1);
+                int meshDataIndex = ((y * verticesPerLine + x) * 4) / meshSimplification;
+                //float colourShifter = 1;//Lerp(heightMap[x][y], 2, 1);
 
-                if (heightMap[x][y] >= 0.5f) {
+                if (heightMap[x][y] >= 0.7f) {
+                    meshData.textureColourPlane[meshDataIndex] = (unsigned char)255;
+                    meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)255;
+                    meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)255;
+                    meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
+                }
+                /*else if (heightMap[x][y] >= 0.5f) {
                     meshData.textureColourPlane[meshDataIndex] = (unsigned char)0;
-                    meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)(200 / colourShifter);
+                    meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)175;
+                    meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)0;
+                    meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
+                }*/
+                else if (heightMap[x][y] > 0.f) {
+                    meshData.textureColourPlane[meshDataIndex] = (unsigned char)Lerp(heightMap[x][y], 150, 0);
+                    meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)Lerp(heightMap[x][y], 100, 255);
                     meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)0;
                     meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
                 }
-                else if (heightMap[x][y] >= 0.f) {
-                    meshData.textureColourPlane[meshDataIndex] = (unsigned char)(150 / colourShifter);
-                    meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)(floorf(75 / colourShifter));
-                    meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)0;
-                    meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
-                }
+                //else if (heightMap[x][y] >= 0.01f) {
+                //    meshData.textureColourPlane[meshDataIndex] = (unsigned char)150;
+                //    meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)75;
+                //    meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)0;
+                //    meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
+                //}
                 else {
                     meshData.vertices[vertexIndex].Position.y = 0;
                     meshData.textureColourPlane[meshDataIndex] = (unsigned char)0;
                     meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)0;
-                    meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)(floorf(Lerp(heightMap[x][y], 128, 255)) / colourShifter);
+                    meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)Lerp(heightMap[x][y], 128, 255);
                     meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
                 }
 
 
                 if (x < chunkWidth - 1 && y < chunkHeight - 1) {
-                    meshData.AddTriangle(vertexIndex, vertexIndex + chunkWidth + 1, vertexIndex + chunkWidth);
-                    meshData.AddTriangle(vertexIndex + chunkWidth + 1, vertexIndex, vertexIndex + 1);
+                    meshData.AddTriangle(vertexIndex, vertexIndex + verticesPerLine + 1, vertexIndex + verticesPerLine);
+                    meshData.AddTriangle(vertexIndex + verticesPerLine + 1, vertexIndex, vertexIndex + 1);
                 }
                 vertexIndex++;
             }
         }
+        return meshData;
     }
-
-    void GenerateMapGOs(Scene* scene) {
-        GenerateNoiseData();
+    
+    void GenerateMapModel() {
+        MeshData meshData = GenerateNoiseData(1);
         models["generatedMeshChunk"] = new Model(Mesh(meshData.GenerateMesh()));
         int chunkIndex = 0;
         for (int x = 0; x < numberOfChunks; x++) {
             for (int y = 0; y < numberOfChunks; y++) {
-                GenerateNoiseData();
+                meshData = GenerateNoiseData(1);
                 models["generatedMeshChunk"]->meshes.push_back(Mesh(meshData.GenerateMesh()));
                 offsetY = y * (chunkHeight - 1);
             }
             offsetX = x * (chunkWidth - 1);
         }
         cout << models["generatedMeshChunk"]->meshes.size() << endl;
-        scene->sceneGOs["mapChunk"] = new GameObject(models["generatedMeshChunk"], glm::vec3(moveLeftX, -15.f, moveLeftZ), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
-        scene->sceneGOs["mapChunk"]->staticObj = true;
 
+    }
+
+    void UpdateVisibleChunks() {
+        int currentChunkCoordX = (int)floor(player->position.x / chunkWidth - 1);
+        int currentChunkCoordZ = (int)floor(player->position.z / chunkHeight - 1);
+
+        for (int yOffset = -numChunksInRange; yOffset <= numChunksInRange; yOffset++) {
+            for (int xOffset = -numberOfChunks; xOffset <= numChunksInRange; xOffset++) {
+                glm::vec2 viewedChunkCoord = glm::vec2(currentChunkCoordX + xOffset, currentChunkCoordZ + yOffset);
+
+                if (chunkMap.count(viewedChunkCoord) == 1) {
+                    if (glm::distance(chunkMap[viewedChunkCoord].position, player->position) > viewDist) {
+                        chunkMap[viewedChunkCoord].render = false;
+                    }
+                    else {
+                        chunkMap[viewedChunkCoord].render = false;
+                    }
+                }
+                else {
+                    chunkMap[viewedChunkCoord] = GameObject(new Model())
+                }
+            }
+        }
     }
 
     virtual Scene* InitScene() override {
         Scene* scene = scenes.at("Procedural");
         //models["generatedMesh"] = new Model(Mesh(meshData.GenerateMesh()));
         
-        GenerateMapGOs(scene);
+        GenerateMapModel();
+
+        scene->sceneGOs["mapChunk"] = new GameObject(models["generatedMeshChunk"], glm::vec3(moveLeftX, -15.f, moveLeftZ), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
+        scene->sceneGOs["mapChunk"]->staticObj = true;
 
         //GameObject* floor = new GameObject(models["generatedMeshChunk" ], glm::vec3(0.f, -20.f, 0.f), glm::vec3(0.f), glm::vec3(1.f, 1.f, 1.f), glm::vec3(0), "floor");
         //floor->staticObj = true;
@@ -273,12 +315,14 @@ public:
     }
 
     virtual void PassDataToScene(int shift = 0) override{
-        offsetX++;
-        offsetY++;
+        rngOffsetX++;
+        rngOffsetY++;
         if (shift == 1) {
-            //GenerateNoiseData();
-            //delete sceneGOs["mapChunk " + to_string(0)]->model;
-            //sceneGOs["mapChunk " + to_string(0)]->model = new Model(Mesh(meshData.GenerateMesh()));
+            delete models["generatedMeshChunk"];
+            delete sceneGOs["mapChunk"];
+            GenerateMapModel();
+            sceneGOs["mapChunk"] = new GameObject(models["generatedMeshChunk"], glm::vec3(moveLeftX, -15.f, moveLeftZ), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
+            sceneGOs["mapChunk"]->staticObj = true;
         }
     }
 
