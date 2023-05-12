@@ -84,7 +84,7 @@ void GameObject::Update(float deltaTime = 0.f) {
 		velocity.y += gravityForce * deltaTime;
 	}
 	position += velocity;
-	velocity *= glm::vec3(0.4, 0.4, 0.4);
+	velocity *= glm::vec3(0.4, 0.7, 0.4);
 	//cout << position.x << endl;
 }
 

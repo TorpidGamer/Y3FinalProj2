@@ -42,7 +42,7 @@ const unsigned int SCR_HEIGHT = 600;
 //Global Variables
 bool rerollRNG = false;
 bool rPressed = false;
-float jumpVelocity = 1000;
+float jumpVelocity = 10000;
 float jumpHold = 0;
 Shader* shaderPointer;
 bool fPressed = false;
@@ -72,7 +72,7 @@ int main() {
 
     // glfw window creation
    // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "ProceduralTerrain", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -270,8 +270,26 @@ void CheckCollisions() {
                     if ((!it->second->isTrigger && !jit->second->isTrigger)) {
                         if (!it->second->staticObj) it->second->velocity += -collision.normal * collision.depth;
                         if (!jit->second->staticObj) jit->second->velocity += collision.normal * collision.depth;
+                        if (jit->second->name == "player" || it->second->name == "player") {
+                            if (collision.normal.y > 0.6f) {
+                                player->isGrounded = true;
+                            }
+                            else player->isGrounded = false;
+                        }
+                    }
+                    continue;
+                }
+                else {
+                    if (it->second->name == "player" || jit->second->name == "player") {
+                        player->isGrounded = false;
                     }
                 }
+            }
+            if (it->second->name == "player" && !it->second->resolveCollisions) {
+                it->second->isGrounded = false;
+            }
+            if (jit->second->name == "player" && !jit->second->resolveCollisions) {
+                jit->second->isGrounded = false;
             }
         }
     }
@@ -361,6 +379,18 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 void ProcessInputs(GLFWwindow* window) {
+
+    if (currentScene->keyPressed == false) {
+        for (int i = 65; i < 91; i++) {
+            if (glfwGetKey(window, i) == GLFW_PRESS) {
+                cout << "Any Key Pressed" << endl;
+                currentScene->keyPressed = true;
+                player->gravity = true;
+            }
+        }
+    }
+
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
@@ -374,15 +404,15 @@ void ProcessInputs(GLFWwindow* window) {
         camera.ProcessKeyboard(RIGHT, deltaTime);
 
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        //if (camera.playerChar->gravity == false && !playerJumpTimer.isStarted) {
-        //    //Jump reaches about 0.8 in height
-        //    jumpHold = 0;
-        //    playerJumpTimer.isStarted = true;
-        //}
-        //else {
-        //    jumpHold += 0.06 * deltaTime;
-        //}
-        camera.playerChar->velocity.y = 0.33f;
+        if (camera.playerChar->isGrounded == true && !playerJumpTimer.isStarted) {
+            //Jump reaches about 0.8 in height
+            jumpHold = 0;
+            playerJumpTimer.isStarted = true;
+        }
+        else {
+            jumpHold += 0.06 * deltaTime;
+        }
+        //camera.playerChar->velocity.y = 0.33f;
     }
 
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {

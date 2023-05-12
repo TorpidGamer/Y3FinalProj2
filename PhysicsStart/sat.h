@@ -134,10 +134,14 @@ CollisionDetails IsOverlapped(GameObject* objects[2]) {
 		float minDepth = 0.0001;
 		collisionDeets.depth /= collisionDeets.normal.length();
 
-		collisionDeets.depth /= 2;
+		collisionDeets.depth;
 		if (collisionDeets.depth < minDepth) collisionDeets.depth = minDepth;
 		if (collisionDeets.normal.x == 0 && collisionDeets.normal.y == 0 && collisionDeets.normal.z == 0); //cout << "Normal not Valid" << endl;
-		else collisionDeets.normal = glm::normalize(collisionDeets.normal);
+		else {
+			collisionDeets.normal = glm::normalize(collisionDeets.normal);
+			collisionDeets.normal.x = 0;
+			collisionDeets.normal.z = 0;
+		}
 		if (isnan(collisionDeets.normal.x)) cout << "Normalized Normal Nan" << endl;
 		//cout << "Overlap" << endl;
 		//cout << collisionDeets.depth << endl;

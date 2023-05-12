@@ -28,7 +28,8 @@ public:
 	bool isBottom = false;
 	bool isTrigger = false;
 	bool render = true;
-	float gravityForce = -1.f;
+	bool isGrounded = false;
+	float gravityForce = -2.f;
 	unsigned int VAO;
 	bool hasPrimitive;
 	int drawBBs = 1;

@@ -25,6 +25,7 @@ public:
     map<string, GameObject*> sceneGOs;
     map<string, Model*> models;
     glm::vec3 playerStartPos = glm::vec3(0);
+    bool keyPressed = false;
     Scene(string name) {
         this->name = name;
         id = numOfScenes++;
@@ -35,6 +36,7 @@ public:
     }
     virtual Scene* InitScene() { cout << "Attempted to call initilization on base class, mistake?" << endl; return nullptr; };
     virtual void PassDataToScene(int shift = 0) { cout << "No Function Implemented for this scene" << endl; };
+    virtual void UpdateLevel(int shift = 0) { cout << "No Update Function implemented for this scene" << endl; };
 
     void Unload() {
         if (!models.empty()) {
@@ -64,11 +66,13 @@ Scene* LoadScene(Scene* currentScene, string sceneToLoad, Camera* cam) {
     }
     playerMesh = new Model(playerPrim.CreateModel(Primitives::Cube));
     player = new GameObject(playerMesh, glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "player");
+    player->gravity = false;
     cam->playerChar = player;
     player->position = scenes.at(sceneToLoad)->playerStartPos;
     Scene* temp = scenes.at(sceneToLoad)->InitScene();
     temp->sceneGOs["player"] = player;
     sceneLoaded = true;
+    temp->keyPressed = false;
     for (map<string, GameObject*>::iterator it = currentScene->sceneGOs.begin(); it != currentScene->sceneGOs.end(); it++) {
         cout << it->first << endl;
     }
@@ -178,7 +182,7 @@ public:
     float rngOffsetX = 0, rngOffsetY = 0;
     int numChunksInRange = viewDist / chunkWidth - 1;
     vector<MeshData> meshDatas;
-    map<glm::vec2, GameObject> chunkMap;
+    map<glm::vec2, Mesh*> meshMap;
     ProceduralScene(string name) : Scene(name) {
         //GenerateNoiseData();
     }
@@ -198,7 +202,7 @@ public:
                 float sampleY = y + offsetY + rngOffsetY;
 
                 heightMap[x][y] = FractalBrownianMotion(sampleX, sampleY, octaves);//Noise
-                glm::vec3 currentPoint = glm::vec3(moveLeftX + sampleX, heightMap[x][y] * frequency, moveLeftZ - sampleY);
+                glm::vec3 currentPoint = glm::vec3(moveLeftX + sampleX, heightMap[x][y] * frequency, moveLeftZ + sampleY);
 
                 textureMap[x][y] = heightMap[x][y];
                 meshData.vertices[vertexIndex].Position = currentPoint;
@@ -261,36 +265,17 @@ public:
         for (int x = 0; x < numberOfChunks; x++) {
             for (int y = 0; y < numberOfChunks; y++) {
                 meshData = GenerateNoiseData(1);
-                models["generatedMeshChunk"]->meshes.push_back(Mesh(meshData.GenerateMesh()));
+                meshMap[glm::vec2(offsetX, offsetY)] = new Mesh(meshData.GenerateMesh());
+                models["generatedMeshChunk"]->meshes.push_back(*meshMap[glm::vec2(offsetX, offsetY)]);
                 offsetY = y * (chunkHeight - 1);
             }
             offsetX = x * (chunkWidth - 1);
         }
         cout << models["generatedMeshChunk"]->meshes.size() << endl;
-
     }
 
-    void UpdateVisibleChunks() {
-        int currentChunkCoordX = (int)floor(player->position.x / chunkWidth - 1);
-        int currentChunkCoordZ = (int)floor(player->position.z / chunkHeight - 1);
+    virtual void UpdateLevel(int shift = 0) override {
 
-        for (int yOffset = -numChunksInRange; yOffset <= numChunksInRange; yOffset++) {
-            for (int xOffset = -numberOfChunks; xOffset <= numChunksInRange; xOffset++) {
-                glm::vec2 viewedChunkCoord = glm::vec2(currentChunkCoordX + xOffset, currentChunkCoordZ + yOffset);
-
-                if (chunkMap.count(viewedChunkCoord) == 1) {
-                    if (glm::distance(chunkMap[viewedChunkCoord].position, player->position) > viewDist) {
-                        chunkMap[viewedChunkCoord].render = false;
-                    }
-                    else {
-                        chunkMap[viewedChunkCoord].render = false;
-                    }
-                }
-                else {
-                    chunkMap[viewedChunkCoord] = GameObject(new Model())
-                }
-            }
-        }
     }
 
     virtual Scene* InitScene() override {
@@ -299,7 +284,7 @@ public:
         
         GenerateMapModel();
 
-        scene->sceneGOs["mapChunk"] = new GameObject(models["generatedMeshChunk"], glm::vec3(moveLeftX, -15.f, moveLeftZ), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
+        scene->sceneGOs["mapChunk"] = new GameObject(models["generatedMeshChunk"], glm::vec3(0, -40.f, 0), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
         scene->sceneGOs["mapChunk"]->staticObj = true;
 
         //GameObject* floor = new GameObject(models["generatedMeshChunk" ], glm::vec3(0.f, -20.f, 0.f), glm::vec3(0.f), glm::vec3(1.f, 1.f, 1.f), glm::vec3(0), "floor");
@@ -310,10 +295,6 @@ public:
         return scene;
     }
 
-    void ScrollNoise() {
-
-    }
-
     virtual void PassDataToScene(int shift = 0) override{
         rngOffsetX++;
         rngOffsetY++;
@@ -321,7 +302,7 @@ public:
             delete models["generatedMeshChunk"];
             delete sceneGOs["mapChunk"];
             GenerateMapModel();
-            sceneGOs["mapChunk"] = new GameObject(models["generatedMeshChunk"], glm::vec3(moveLeftX, -15.f, moveLeftZ), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
+            sceneGOs["mapChunk"] = new GameObject(models["generatedMeshChunk"], glm::vec3(0, -40.f, 0), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
             sceneGOs["mapChunk"]->staticObj = true;
         }
     }
