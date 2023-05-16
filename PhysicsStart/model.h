@@ -30,7 +30,14 @@ public:
 	}
 	void Draw(Shader& shader) {
 		for (unsigned int i = 0; i < meshes.size(); i++) {
+			if (!meshes[i].render) continue;
+			if (meshes[i].wireFrame) {
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			}
 			meshes[i].Draw(shader);
+			if (meshes[i].wireFrame) {
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			}
 		}
 	}
 private:

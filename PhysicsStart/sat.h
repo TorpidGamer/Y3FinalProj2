@@ -63,6 +63,10 @@ CollisionDetails IsOverlapped(GameObject* objects[2]) {
 	for (int o = 0; o < 1; o++) {
 		for (int i = 1; i < objects[o]->model->meshes.size(); i++) {
 			int otherObj = o == 1 ? 0 : 1;
+			if (!objects[o]->model->meshes[i].useForCollision) {
+				cout << "mesh not for collision" << endl;
+				continue;
+			}
 			float dist = glm::distance(objects[o]->model->meshes[i].meshSpaceCenter + objectPos[o], objectPos[otherObj]);
 			if (dist < objectClosestMeshDist[o]) {
 				objectClosestMeshDist[o] = dist;
@@ -70,6 +74,8 @@ CollisionDetails IsOverlapped(GameObject* objects[2]) {
 			}
 		}
 	}
+	if (objects[0]->name == "player") objectMeshToTest[0] = 1;
+	if (objects[1]->name == "player") objectMeshToTest[1] = 1;
 	glm::vec3 objectMeshPosition[2] = { objects[0]->model->meshes[objectMeshToTest[0]].meshSpaceCenter, objects[1]->model->meshes[objectMeshToTest[1]].meshSpaceCenter };
 	vector<glm::vec3> normalsToTest[2] = { objects[0]->model->meshes[objectMeshToTest[0]].normals, objects[1]->model->meshes[objectMeshToTest[1]].normals };
 	vector<glm::vec3> objectEdges[2] = { objects[0]->model->meshes[objectMeshToTest[0]].edges, objects[1]->model->meshes[objectMeshToTest[1]].edges };

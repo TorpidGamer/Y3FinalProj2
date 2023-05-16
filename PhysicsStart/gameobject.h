@@ -44,7 +44,7 @@ public:
 	vector<string> collidingWith;
 	Mesh boundingBox, collisionLineMesh;
 	
-	GameObject(Model *model, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, glm::vec3 bbDimensions, string name);
+	GameObject(Model *model, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, glm::vec3 bbDimensions, string name, bool useForCollision = true);
 	GameObject(string name);
 	//~GameObject();
 

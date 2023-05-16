@@ -1,8 +1,14 @@
 #include "gameobject.h"
 
 GameObject::GameObject(Model* model, glm::vec3 position = glm::vec3(0.f),
-	glm::vec3 rotation = glm::vec3(0.f), glm::vec3 scale = glm::vec3(1.f), glm::vec3 bbDimensions = glm::vec3(0.f), string name = "") {
+	glm::vec3 rotation = glm::vec3(0.f), glm::vec3 scale = glm::vec3(1.f), glm::vec3 bbDimensions = glm::vec3(0.f), string name = "", bool useForCollision) {
 	this->model = model;
+	if (!useForCollision) {
+		for (int i = 0; i < model->meshes.size(); i++) {
+			model->meshes[i].useForCollision = false;
+		}
+		cout << "object: " << name << " and its " << model->meshes.size() <<  " meshes are not to be used for collisions" << endl;
+	}
 	Initialise(position, rotation, scale, bbDimensions, name);
 	LoopVertices();
 }
@@ -190,6 +196,12 @@ void GameObject::LoopVertices() {
 	};
 
 	boundingBox = Mesh(primitiveVertices, indices);
+	boundingBox.useForCollision = false;
+	boundingBox.render = false;
+	boundingBox.wireFrame = true;
+	model->meshes.push_back(boundingBox);
+	cout << "object: " << name << " has " << model->meshes.size() << " meshes" << endl;
+	CalculateBounds();
 }
 void GameObject::CalculateBounds() { //Needs redoing, only need one bounding box to check if within collision test range
 	glm::vec3 nextPos = position + velocity;

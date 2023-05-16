@@ -64,8 +64,10 @@ Scene* LoadScene(Scene* currentScene, string sceneToLoad, Camera* cam) {
         cout << "Not a valid Scene" << endl;
         return LoadScene(currentScene, "Test", cam);
     }
-    playerMesh = new Model(playerPrim.CreateModel(Primitives::Cube));
-    player = new GameObject(playerMesh, glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "player");
+    playerMesh = new Model("models/soldier/soldier.glb");
+    delete player;
+    player = new GameObject(playerMesh, glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "player", false);
+    player->model->meshes[1].render = true;
     player->gravity = false;
     cam->playerChar = player;
     player->position = scenes.at(sceneToLoad)->playerStartPos;
@@ -133,6 +135,7 @@ public:
     vector<Vertex> vertices;
     vector<unsigned int> triangles;
     vector<unsigned char> textureColourPlane;
+    glm::vec2 meshPos;
     int CPH = 0, CPW = 0;
 
     int triangleIndex = 0;
@@ -165,7 +168,7 @@ class ProceduralScene : public Scene {
 public:
     static const int chunkWidth = 10;
     static const int chunkHeight = 10;
-    static const int numberOfChunks = 16;
+    static const int numberOfChunks = 32;
     static const int mapWidth = chunkWidth * numberOfChunks;
     static const int mapHeight = chunkHeight * numberOfChunks;
     float frequency = 20;
@@ -182,7 +185,7 @@ public:
     float rngOffsetX = 0, rngOffsetY = 0;
     int numChunksInRange = viewDist / chunkWidth - 1;
     vector<MeshData> meshDatas;
-    map<glm::vec2, Mesh*> meshMap;
+    //map<glm::vec2, Mesh*> meshMap;
     ProceduralScene(string name) : Scene(name) {
         //GenerateNoiseData();
     }
@@ -265,8 +268,8 @@ public:
         for (int x = 0; x < numberOfChunks; x++) {
             for (int y = 0; y < numberOfChunks; y++) {
                 meshData = GenerateNoiseData(1);
-                meshMap[glm::vec2(offsetX, offsetY)] = new Mesh(meshData.GenerateMesh());
-                models["generatedMeshChunk"]->meshes.push_back(*meshMap[glm::vec2(offsetX, offsetY)]);
+                Mesh nextMesh = Mesh(meshData.GenerateMesh());
+                models["generatedMeshChunk"]->meshes.push_back(nextMesh);
                 offsetY = y * (chunkHeight - 1);
             }
             offsetX = x * (chunkWidth - 1);

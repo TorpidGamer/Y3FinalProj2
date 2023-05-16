@@ -217,6 +217,7 @@ int main() {
                 numUpdates++;
                 //Test collisions
                 CheckCollisions();
+                //cout << "Frame passed" << endl;
             }
             else {
                 cout << "Waiting on scene load" << endl;
@@ -315,8 +316,6 @@ void Update() {
         it->second->Update(deltaTime);
 
         if (it->second->name == "player") {
-            //camera.Position = sceneGOs[i]->position;
-            //cout << sceneGOs[i]->velocity.y << endl;
         }
         else if (it->second->name == "box") {
             it->second->Rotate(0.f, 0.f, angle);
@@ -351,6 +350,7 @@ void Render(map<string, GameObject*> renderList, Shader& shader) {
     std::map<float, GameObject*> sortedTransparencies;
 
     for (auto it = renderList.begin(); it != renderList.end(); it++) {
+        if (!it->second->render) continue;
         if (it->second->transparent) {
             float distance = glm::length(camera.Position - it->second->position);
             sortedTransparencies[distance] = it->second;
@@ -404,15 +404,15 @@ void ProcessInputs(GLFWwindow* window) {
         camera.ProcessKeyboard(RIGHT, deltaTime);
 
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        if (camera.playerChar->isGrounded == true && !playerJumpTimer.isStarted) {
-            //Jump reaches about 0.8 in height
-            jumpHold = 0;
-            playerJumpTimer.isStarted = true;
-        }
-        else {
-            jumpHold += 0.06 * deltaTime;
-        }
-        //camera.playerChar->velocity.y = 0.33f;
+        //if (camera.playerChar->isGrounded == true && !playerJumpTimer.isStarted) {
+        //    //Jump reaches about 0.8 in height
+        //    jumpHold = 0;
+        //    playerJumpTimer.isStarted = true;
+        //}
+        //else {
+        //    jumpHold += 0.06 * deltaTime;
+        //}
+        camera.playerChar->velocity.y = 0.33f;
     }
 
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {

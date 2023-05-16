@@ -86,6 +86,9 @@ public:
 	int colourPlaneHeight = 0, colourPlaneWidth = 0;
 	unsigned int VAO;
 	bool empty = false;
+	bool render = true;
+	bool useForCollision = true;
+	bool wireFrame = false;
 
 	Mesh() {
 		empty = true;
