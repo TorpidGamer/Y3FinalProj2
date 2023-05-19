@@ -23,7 +23,6 @@ CollisionDetails CalculateDetails(glm::vec3 axis, glm::vec2 projection1, glm::ve
 
 	if (longSpan > sumSpan) {
 		currentDetails->overlapped = false;
-		//cout << name << " Pass" << endl;
 		return *currentDetails;
 	}
 
@@ -35,7 +34,6 @@ CollisionDetails CalculateDetails(glm::vec3 axis, glm::vec2 projection1, glm::ve
 		currentDetails->depth = axisDepth;
 		currentDetails->normal = axis;
 		if (currentDetails->normal.x == 0 && currentDetails->normal.y == 0 && currentDetails->normal.z == 0) {
-			//cout << name << " was 0, 0, 0" << endl;
 			currentDetails->depth = previousDepth;
 			currentDetails->normal = previousAxis;
 		}
@@ -64,13 +62,13 @@ CollisionDetails IsOverlapped(GameObject* objects[2]) {
 		for (int i = 1; i < objects[o]->model->meshes.size(); i++) {
 			int otherObj = o == 1 ? 0 : 1;
 			if (!objects[o]->model->meshes[i].useForCollision) {
-				cout << "mesh not for collision" << endl;
 				continue;
 			}
 			float dist = glm::distance(objects[o]->model->meshes[i].meshSpaceCenter + objectPos[o], objectPos[otherObj]);
 			if (dist < objectClosestMeshDist[o]) {
 				objectClosestMeshDist[o] = dist;
 				objectMeshToTest[o] = i;
+				//cout << i << endl;
 			}
 		}
 	}

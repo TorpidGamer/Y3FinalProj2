@@ -67,11 +67,11 @@ Scene* LoadScene(Scene* currentScene, string sceneToLoad, Camera* cam) {
     playerMesh = new Model("models/soldier/soldier.glb");
     delete player;
     player = new GameObject(playerMesh, glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f), glm::vec3(0), "player", false);
-    player->model->meshes[1].render = true;
+    //player->model->meshes[1].render = true;
     player->gravity = false;
     cam->playerChar = player;
-    player->position = scenes.at(sceneToLoad)->playerStartPos;
     Scene* temp = scenes.at(sceneToLoad)->InitScene();
+    player->position = scenes.at(sceneToLoad)->playerStartPos;
     temp->sceneGOs["player"] = player;
     sceneLoaded = true;
     temp->keyPressed = false;
@@ -164,11 +164,21 @@ public:
     }
 };
 
+struct Vector2 {
+    float x = 0;
+    float y = 0;
+
+    Vector2(float _x, float _y) {
+        x = _x;
+        y = _y;
+    }
+};
+
 class ProceduralScene : public Scene {
 public:
     static const int chunkWidth = 10;
     static const int chunkHeight = 10;
-    static const int numberOfChunks = 32;
+    static const int numberOfChunks = 64;
     static const int mapWidth = chunkWidth * numberOfChunks;
     static const int mapHeight = chunkHeight * numberOfChunks;
     float frequency = 20;
@@ -180,12 +190,13 @@ public:
     float moveLeftX = (mapWidth - 1) / -2.f;
     float moveLeftZ = (mapHeight - 1) / 2.f;
 
-    float viewDist = 300;
+    float viewDist = 100;
     float offsetX=0, offsetY=0;
     float rngOffsetX = 0, rngOffsetY = 0;
     int numChunksInRange = viewDist / chunkWidth - 1;
+    MeshData uMeshData = GenerateNoiseData(1);
     vector<MeshData> meshDatas;
-    //map<glm::vec2, Mesh*> meshMap;
+    map<string, bool> meshMap;
     ProceduralScene(string name) : Scene(name) {
         //GenerateNoiseData();
     }
@@ -203,7 +214,8 @@ public:
 
                 float sampleX = x + offsetX + rngOffsetX;
                 float sampleY = y + offsetY + rngOffsetY;
-
+                //if (sampleX < 0) cout << "error amount for sampleX" << sampleX << endl; sampleX = 0;
+                //if (sampleY < 0) cout << "error amount for sampleY" << sampleY << endl; sampleY = 0;
                 heightMap[x][y] = FractalBrownianMotion(sampleX, sampleY, octaves);//Noise
                 glm::vec3 currentPoint = glm::vec3(moveLeftX + sampleX, heightMap[x][y] * frequency, moveLeftZ + sampleY);
 
@@ -216,7 +228,6 @@ public:
                 float colourMapTranslate = (heightMap[x][y] + 1) / 2;
 
                 int meshDataIndex = ((y * verticesPerLine + x) * 4) / meshSimplification;
-                //float colourShifter = 1;//Lerp(heightMap[x][y], 2, 1);
 
                 if (heightMap[x][y] >= 0.7f) {
                     meshData.textureColourPlane[meshDataIndex] = (unsigned char)255;
@@ -224,24 +235,12 @@ public:
                     meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)255;
                     meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
                 }
-                /*else if (heightMap[x][y] >= 0.5f) {
-                    meshData.textureColourPlane[meshDataIndex] = (unsigned char)0;
-                    meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)175;
-                    meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)0;
-                    meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
-                }*/
                 else if (heightMap[x][y] > 0.f) {
                     meshData.textureColourPlane[meshDataIndex] = (unsigned char)Lerp(heightMap[x][y], 150, 0);
                     meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)Lerp(heightMap[x][y], 100, 255);
                     meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)0;
                     meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
                 }
-                //else if (heightMap[x][y] >= 0.01f) {
-                //    meshData.textureColourPlane[meshDataIndex] = (unsigned char)150;
-                //    meshData.textureColourPlane[meshDataIndex + 1] = (unsigned char)75;
-                //    meshData.textureColourPlane[meshDataIndex + 2] = (unsigned char)0;
-                //    meshData.textureColourPlane[meshDataIndex + 3] = (unsigned char)255;
-                //}
                 else {
                     meshData.vertices[vertexIndex].Position.y = 0;
                     meshData.textureColourPlane[meshDataIndex] = (unsigned char)0;
@@ -260,51 +259,47 @@ public:
         }
         return meshData;
     }
-    
-    void GenerateMapModel() {
-        MeshData meshData = GenerateNoiseData(1);
-        models["generatedMeshChunk"] = new Model(Mesh(meshData.GenerateMesh()));
-        int chunkIndex = 0;
-        for (int x = 0; x < numberOfChunks; x++) {
-            for (int y = 0; y < numberOfChunks; y++) {
-                meshData = GenerateNoiseData(1);
-                Mesh nextMesh = Mesh(meshData.GenerateMesh());
-                models["generatedMeshChunk"]->meshes.push_back(nextMesh);
-                offsetY = y * (chunkHeight - 1);
+   
+
+    virtual void UpdateLevel(int shift = 0) {
+        for (int x = (-viewDist + player->position.x + 318) / (chunkWidth - 1); x < (viewDist + player->position.x + 318) / (chunkWidth - 1); x++) {
+            for (int y = (-viewDist + player->position.z - 327) / (chunkHeight - 1); y < (viewDist + player->position.z - 327) / (chunkHeight - 1); y++) {
+                if (!meshMap[to_string(offsetX) + ", " + to_string(offsetY)]) {
+                    uMeshData = GenerateNoiseData(1);
+                    Mesh nextMesh = Mesh(uMeshData.GenerateMesh());
+                    models["generatedMeshChunk"]->meshes.push_back(nextMesh);
+                    meshMap[to_string(offsetX) + ", " + to_string(offsetY)] = true;
+                }
+                offsetY = (y) * (chunkHeight - 1);
             }
-            offsetX = x * (chunkWidth - 1);
+            offsetX = (x) * (chunkWidth - 1);
         }
-        cout << models["generatedMeshChunk"]->meshes.size() << endl;
-    }
-
-    virtual void UpdateLevel(int shift = 0) override {
-
     }
 
     virtual Scene* InitScene() override {
         Scene* scene = scenes.at("Procedural");
-        //models["generatedMesh"] = new Model(Mesh(meshData.GenerateMesh()));
-        
-        GenerateMapModel();
-
+        playerStartPos = glm::vec3(0, 0, 0);
+        models["generatedMeshChunk"] = new Model(Mesh(uMeshData.GenerateMesh()));
+        Mesh nextMesh = Mesh(uMeshData.GenerateMesh());
+        models["generatedMeshChunk"]->meshes.push_back(nextMesh);
         scene->sceneGOs["mapChunk"] = new GameObject(models["generatedMeshChunk"], glm::vec3(0, -40.f, 0), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
         scene->sceneGOs["mapChunk"]->staticObj = true;
 
-        //GameObject* floor = new GameObject(models["generatedMeshChunk" ], glm::vec3(0.f, -20.f, 0.f), glm::vec3(0.f), glm::vec3(1.f, 1.f, 1.f), glm::vec3(0), "floor");
+        //GameObject* floor = new GameObject(models["generatedMeshChunk"], glm::vec3(0.f, -20.f, 0.f), glm::vec3(0.f), glm::vec3(1.f, 1.f, 1.f), glm::vec3(0), "floor");
         //floor->staticObj = true;
 
         //scene->sceneGOs["floor"] = floor;
 
         return scene;
     }
-
+    
     virtual void PassDataToScene(int shift = 0) override{
         rngOffsetX++;
         rngOffsetY++;
         if (shift == 1) {
             delete models["generatedMeshChunk"];
             delete sceneGOs["mapChunk"];
-            GenerateMapModel();
+            //GenerateMapModel();
             sceneGOs["mapChunk"] = new GameObject(models["generatedMeshChunk"], glm::vec3(0, -40.f, 0), glm::vec3(0), glm::vec3(1), glm::vec3(0), "floor");
             sceneGOs["mapChunk"]->staticObj = true;
         }
@@ -354,7 +349,8 @@ float PerlinNoise(float x, float y) {
     }
 
     //cout << "floorf x casted: " << (int)floorf(x) << " floorf x not casted: " << floorf(x) << endl;
-
+    if (x < 0) x *= -1;
+    if (y < 0) y *= -1;
     int cappedX = (int)floor(x) % 256;
     int cappedY = (int)floor(y) % 256;
     float fX = x - floorf(x);

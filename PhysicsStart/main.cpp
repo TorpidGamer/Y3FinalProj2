@@ -264,7 +264,7 @@ void CheckCollisions() {
         for (auto jit = currentScene->sceneGOs.begin(); jit != currentScene->sceneGOs.end(); jit++) {
             it->second->Collisions(jit->second, deltaTime);
             jit->second->Collisions(it->second, deltaTime);
-            if (it->second->resolveCollisions && jit->second->resolveCollisions) {
+            //if (it->second->resolveCollisions && jit->second->resolveCollisions) {
                 GameObject* GOs[2] = { it->second, jit->second };
                 CollisionDetails collision = IsOverlapped(GOs);
                 if (collision.overlapped) {
@@ -285,7 +285,7 @@ void CheckCollisions() {
                         player->isGrounded = false;
                     }
                 }
-            }
+            //}
             if (it->second->name == "player" && !it->second->resolveCollisions) {
                 it->second->isGrounded = false;
             }
@@ -317,13 +317,19 @@ void Update() {
 
         if (it->second->name == "player") {
         }
-        else if (it->second->name == "box") {
-            it->second->Rotate(0.f, 0.f, angle);
-        }
-        else if (it->second->name == "maxwell") {
-            //it->second->Rotate(0.f, -90.f, angle);
+        else {
+            for (int i = 0; i < it->second->model->meshes.size(); i++) {
+                Model* model = it->second->model;
+                if (model->meshes[i].wireFrame) continue;
+                if (glm::distance(model->meshes[i].meshSpaceCenter + it->second->position, player->position) > 200) {
+                    model->meshes[i].render = false;
+                }
+                else model->meshes[i].render = true;
+            }
         }
     }
+
+    currentScene->UpdateLevel();
 
     for (unsigned int i = 0; i < timers.size(); i++) {
         timers[i].Update(deltaTime);
