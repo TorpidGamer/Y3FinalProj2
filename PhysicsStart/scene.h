@@ -178,6 +178,8 @@ class ProceduralScene : public Scene {
 public:
     static const int chunkWidth = 10;
     static const int chunkHeight = 10;
+    vector<uint32_t> chunkVertIterator;
+    vector<uint32_t> chunkHoriIterator;
     static const int numberOfChunks = 64;
     static const int mapWidth = chunkWidth * numberOfChunks;
     static const int mapHeight = chunkHeight * numberOfChunks;
